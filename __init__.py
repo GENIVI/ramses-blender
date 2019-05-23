@@ -19,6 +19,7 @@ import logging
 import random
 import time
 import gpu
+from .ramses_blender_exporter import RamsesBlenderExporter
 
 
 log = logging.getLogger('ramses-scene-exporter')
@@ -113,9 +114,9 @@ class SceneDumpOperator(bpy.types.Operator):
         scene_print_objects(scene)
         objects = scene_get_objects(scene)
 
-        object_print_local_coords(objects)
-        object_print_global_coords(objects)
-        object_print_transformation_matrix(objects)
+
+        exporter = RamsesBlenderExporter(bpy.data.scenes)
+        exporter.extract_from_blender_scene()
 
         return {'FINISHED'}
 
