@@ -70,13 +70,14 @@ class SceneRepresentation():
         for o in self.objects:
             self.graph.add_node(o)
 
-
 class Node():
     """A base class for operations every node must support"""
 
-    def __init__(self, bo: bpy.types.Object = None):
+    def __init__(self, blender_object: bpy.types.Object = None, name=''):
         self.parent = None
         self.children = []
+        self.blender_object = blender_object
+        self.name = name
 
         # See https://docs.blender.org/api/master/bpy.types.Object.html
         # Matrix access to location, rotation and scale (including deltas),
@@ -113,7 +114,24 @@ class Node():
     def get_parent_inverse_transform(self): return self.matrix_parent_inverse
     def get_world_transform(self): return self.matrix_world
 
+    def vector_unpack(self, vector_list) -> List[float]:
+        """Unpack a vector list i.e. [Vector(1., 1., 1.), Vector(...) ...]
+        into [1., 1., 1., ...]
 
+        Useful for passing values into a rendering engine.
+
+        Arguments:
+            vector_list  -- A vector from Blender.
+
+
+        Returns:
+            List[Float] -- The unpacked values in a Python list.
+        """
+        return [vertex.co for vertex in vector_list]
+
+    def teardown(self):
+        for child in self.children:
+            child.teardown()
 
 class SceneGraph():
     """For every scene, a graph is created so we can translate concepts as close as possible"""
@@ -149,32 +167,101 @@ class SceneGraph():
     def find(self, node: Node) -> Node:
         return self.root.find(node)
 
+    def debug(self):
+        """A convenience method so we can quickly check if a node does not
+        error out on its basic operations"""
+        pass
+
+    def teardown(self):
+        """Tears down the SceneGraph, unallocating resources it might have
+        acquired from Blender. Should be called after the export is complete
+        so the user does not end up with dangling resources which can be very
+        memory intensive"""
+        self.root.teardown()
+
 
 class MeshNode(Node):
+    """A class for meshes that tries to provide its data in a way an
+    OpenGL-powered renderer would expect"""
 
-    def __init__(self, bo: bpy.types.Object):
-        super().__init__(bo)
-        self.mesh = bo.to_mesh()
-        # TODO: pass apply_modifiers as a user pref. Note: to_mesh creates a
-        # new mesh that must be deleted
+    def __init__(self, blender_object: bpy.types.Object):
+        super().__init__(blender_object)
+        self.mesh = None
+        self.init_memory_mesh()
 
-    def get_vertices(self) -> bpy.types.VertexGroup:
-        return self.mesh.vertices
+    def teardown(self):
+        super().teardown()
+        self.mesh.free()
 
-    def get_normals(self):
-        return self.mesh.calc_normals_split()
+    def init_memory_mesh(self, triangulate=True):
+        bmesh_handle = bmesh.new()
+        bmesh_handle.from_mesh(self.blender_object.to_mesh())
+        log.debug(f'Instantiated BMesh {self.mesh} for MeshNode: {self.name}')
+
+        if triangulate:
+            MeshNode.triangulate_mesh(mesh=bmesh_handle, faces=bmesh_handle.faces)
+            log.debug(f'Triangulated mesh: {self.mesh}')
+
+        self.mesh = bmesh_handle
+
+    @staticmethod
+    def triangulate_mesh(mesh, faces):
+        """ Triangulates the argument in-place."""
+        #Artists quite often strive for quads (i.e. four vertices per face),
+        # but for rendering purposes, triangles are often preferred. This same
+        #approach is used by the official .obj exporter
+
+        bmesh.ops.triangulate(mesh, faces=faces)
+
+    def get_vertices(self) -> bmesh.types.BMVertSeq:
+        self.mesh.verts.ensure_lookup_table()
+        return self.mesh.verts
+
+    def get_vertex_buffer(self) -> List[float]:
+        """Returns an unpacked vertex buffer suitable for rendering engines"""
+        vertices = self.get_vertices()
+        return self.vector_unpack(vertices)
+
+    def get_normal_buffer(self, b_use_vertex_normals=True):
+        """Returns an unpacked normal buffer suitable for rendering engines"""
+        normals = self.get_vertex_normals() \
+            if b_use_vertex_normals else self.get_face_normals()
+        return self.vector_unpack(normals)
+
+    def get_vertex_normals(self) -> List[mathutils.Vector]:
+        vertices = self.get_vertices()
+        return [vertex.normal for vertex in vertices]
+
+    def get_face_normals(self, split=True) -> List[mathutils.Vector]:
+        faces = self.get_faces()
+        return [face.normal for face in faces]
 
     def get_tex_coords(self):
         raise NotImplementedError
 
-    def get_faces(self):
-        return self.mesh.polygons
+    def get_faces(self) -> bmesh.types.BMFaceSeq:
+        self.mesh.faces.ensure_lookup_table()
+        return self.mesh.faces
 
-    def get_indices(self):
-        pass
+    def get_indices(self) -> List[int]:
+        faces = self.get_faces()
+        indices = []
+
+        for face in faces:
+            for vertex in face.verts:
+                indices.append(vertex.index)
+
+        return indices
 
     def get_textures(self):
         pass
 
     def get_materials(self):
         pass
+
+    def debug(self):
+        print(self.get_vertices())
+        print(self.get_vertex_normals())
+        print(self.get_face_normals())
+        print(self.get_faces())
+        print(self.get_indices())
