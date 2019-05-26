@@ -136,6 +136,11 @@ class Node():
         Blender object."""
         return self.blender_object is None
 
+    def is_point(self):
+        """Whether this node can be represented by a single point,
+        such as a point light or a camera"""
+        return self.dimensions.length == 0
+
     def find(self, node: Node) -> Node:
         if self == node:
             return self
