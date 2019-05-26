@@ -150,7 +150,12 @@ class SceneGraph():
         if o.type == 'MESH':
             node = MeshNode(o)
         elif o.type == 'CAMERA':
-            node = CameraNode(o)
+            if o.data.type == 'PERSP':
+                node = PerspectiveCameraNode(o)
+            elif o.data.type == 'ORTHO':
+                node = OrthographicCameraNode(o)
+            else:
+                raise NotImplementedError
         elif o.type == 'LIGHT' or o.type == 'LAMP':
             node = LightNode(o)
         else: # TODO: map EMPTIES to Node() ?
@@ -265,3 +270,48 @@ class MeshNode(Node):
         print(self.get_face_normals())
         print(self.get_faces())
         print(self.get_indices())
+
+
+class CameraNode(Node):
+    def __init__(self, blender_object: bpy.types.Object):
+
+        super().__init__(blender_object=blender_object,
+                         name=blender_object.name_full)
+
+        self.fov = blender_object.data.angle
+        # TODO: check against glTF-Blender-IO
+        self.horizontal_fov = blender_object.data.angle_x
+        self.vertical_fov = blender_object.data.angle_y
+        self.z_near = blender_object.data.clip_start
+        self.z_far = blender_object.data.clip_end
+
+        # Distance to the focus point for depth of field
+        self.dof_distance = blender_object.data.dof_distance
+        # Method to fit image and field of view angle inside the sensor.
+        # Either 'AUTO', 'HORIZONTAL' or 'VERTICAL'
+        self.sensor_fit = blender_object.data.sensor_fit
+        # Vertical size of the image sensor area in millimeters
+        self.sensor_height = blender_object.data.sensor_height
+        # Horizontal size of the image sensor area in millimeters
+        self.sensor_width = blender_object.data.sensor_width
+
+        self.shift_x = blender_object.data.shift_x
+        self.shift_y = blender_object.data.shift_y
+
+
+class PerspectiveCameraNode(Node):
+    def __init__(self, blender_object: bpy.types.Object):
+
+        super().__init__(blender_object=blender_object,
+                         name=blender_object.name_full)
+        # TODO: retrieve camera aspect ratio from camera.view_frame()
+
+
+class OrthographicCameraNode(Node):
+    def __init__(self, blender_object: bpy.types.Object):
+
+        super().__init__(blender_object=blender_object,
+                         name=blender_object.name_full)
+
+        self.x_mag = blender_object.data.ortho_scale
+        self.y_mag = blender_object.data.ortho_scale
