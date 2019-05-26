@@ -94,6 +94,23 @@ class Node():
         # into the viewport's coordinate system
         self.matrix_world = mathutils.Matrix().to_4x4().identity()
 
+        if blender_object:
+            self.__init_from_blender_object(blender_object)
+
+    def __init_from_blender_object(self, blender_object: bpy.types.Object):
+        self.matrix_basis = blender_object.matrix_basis
+        self.matrix_local = blender_object.matrix_local
+        self.matrix_parent_inverse = blender_object.matrix_parent_inverse
+        self.matrix_world = blender_object.matrix_world
+
+    def is_placeholder(self):
+        """Placehold nodes are possible in order to have more flexibility to
+        define concepts that are not a 1:1 translation from Blender. Such
+        nodes have no corresponding blender object and are initialized to
+        default sane values. Any other node is initialized from its
+        Blender object."""
+        return self.blender_object is None
+
     def find(self, node: Node) -> Node:
         if self == node:
             return self
