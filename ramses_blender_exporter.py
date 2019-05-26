@@ -94,6 +94,20 @@ class Node():
         # into the viewport's coordinate system
         self.matrix_world = mathutils.Matrix().to_4x4().identity()
 
+        self.dimensions = mathutils.Vector((0.0, 0.0, 0.0))
+        self.color = mathutils.Vector((0.0, 0.0, 0.0))
+        self.scale = mathutils.Vector((0.0, 0.0, 0.0))
+        self.vertex_groups = []
+
+        self.up_axis = 'Z'
+        self.forward_axis = 'NEG_Z'
+
+        # The scenes in which this node appears
+        self.users_scene = []
+        # The collections in which this node appears. This is a new
+        # concept in Blender 2.8 for organizational purposes only.
+        self.users_collections = []
+
         if blender_object:
             self.__init_from_blender_object(blender_object)
 
@@ -102,6 +116,17 @@ class Node():
         self.matrix_local = blender_object.matrix_local
         self.matrix_parent_inverse = blender_object.matrix_parent_inverse
         self.matrix_world = blender_object.matrix_world
+
+        self.dimensions = blender_object.dimensions
+        self.color = blender_object.color
+        self.scale = blender_object.scale
+        self.vertex_groups = blender_object.vertex_groups
+
+        self.up_axis = blender_object.up_axis
+        self.forward_axis = blender_object.track_axis
+
+        self.users_scene = blender_object.users_scene
+        self.users_collections = blender_object.users_collection
 
     def is_placeholder(self):
         """Placehold nodes are possible in order to have more flexibility to
