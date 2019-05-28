@@ -13,6 +13,7 @@ from . import RamsesPython
 import logging
 import mathutils
 from typing import List
+import math
 
 log = logging.getLogger(name='ramses-scene-exporter')
 
@@ -206,7 +207,7 @@ class SceneGraph():
             node = MeshNode(o)
         elif o.type == 'CAMERA':
             if o.data.type == 'PERSP':
-                node = PerspectiveCameraNode(o)
+                node = PerspectiveCameraNode(o, self.scene)
             elif o.data.type == 'ORTHO':
                 node = OrthographicCameraNode(o)
             else:
@@ -354,15 +355,34 @@ class CameraNode(Node):
         self.shift_y = blender_object.data.shift_y
 
 
-class PerspectiveCameraNode(Node):
-    def __init__(self, blender_object: bpy.types.Object):
+class PerspectiveCameraNode(CameraNode):
+    def __init__(self, blender_object: bpy.types.Object, scene: bpy.types.Scene):
 
         super().__init__(blender_object=blender_object,
                          name=blender_object.name_full)
-        # TODO: retrieve camera aspect ratio from camera.view_frame()
+
+        self.scene = scene
+        self.width = self.scene.render.pixel_aspect_x * self.scene.render.resolution_x
+        self.height = self.scene.render.pixel_aspect_y * self.scene.render.resolution_y
+
+        self.aspect_ratio = self.width / self.height
+
+        if self.width >= self.height:
+            if self.sensor_fit != 'VERTICAL':
+                self.vertical_fov = 2.0 * math.\
+                    atan(math.tan(self.fov * 0.5) / self.aspect_ratio)
+            else:
+                pass # Keep the initialization done in CameraNode
+        else:
+            if self.sensor_fit != 'HORIZONTAL':
+                pass # Keep the initialization done in CameraNode
+            else:
+                self.vertical_fov = 2.0 * math.\
+                    atan(math.tan(self.fov * 0.5) / self.aspect_ratio)
 
 
-class OrthographicCameraNode(Node):
+
+class OrthographicCameraNode(CameraNode):
     def __init__(self, blender_object: bpy.types.Object):
 
         super().__init__(blender_object=blender_object,
