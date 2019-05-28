@@ -209,7 +209,7 @@ class SceneGraph():
             node = ObjectNode(o)
 
         if self.root is None:
-            root = node
+            self.root = node
         else:
             parent = node.find(parent) if parent is not None else self.root
             parent.add_child(node)
