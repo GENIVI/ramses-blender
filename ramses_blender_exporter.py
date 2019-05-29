@@ -358,8 +358,7 @@ class CameraNode(Node):
 class PerspectiveCameraNode(CameraNode):
     def __init__(self, blender_object: bpy.types.Object, scene: bpy.types.Scene):
 
-        super().__init__(blender_object=blender_object,
-                         name=blender_object.name_full)
+        super().__init__(blender_object=blender_object)
 
         self.scene = scene
         self.width = self.scene.render.pixel_aspect_x * self.scene.render.resolution_x
@@ -385,8 +384,7 @@ class PerspectiveCameraNode(CameraNode):
 class OrthographicCameraNode(CameraNode):
     def __init__(self, blender_object: bpy.types.Object):
 
-        super().__init__(blender_object=blender_object,
-                         name=blender_object.name_full)
+        super().__init__(blender_object=blender_object)
 
         self.x_mag = blender_object.data.ortho_scale
         self.y_mag = blender_object.data.ortho_scale
