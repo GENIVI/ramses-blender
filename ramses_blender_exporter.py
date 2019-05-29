@@ -341,8 +341,6 @@ class CameraNode(Node):
         self.z_near = blender_object.data.clip_start
         self.z_far = blender_object.data.clip_end
 
-        # Distance to the focus point for depth of field
-        self.dof_distance = blender_object.data.dof_distance
         # Method to fit image and field of view angle inside the sensor.
         # Either 'AUTO', 'HORIZONTAL' or 'VERTICAL'
         self.sensor_fit = blender_object.data.sensor_fit
