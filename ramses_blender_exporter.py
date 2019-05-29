@@ -237,7 +237,7 @@ class SceneGraph():
     def debug(self):
         """A convenience method so we can quickly check if a node does not
         error out on its basic operations"""
-        pass
+        print(self)
 
     def teardown(self):
         """Tears down the SceneGraph, unallocating resources it might have
@@ -252,6 +252,13 @@ class SceneGraph():
         node = from_node if from_node is not None else self.root
         return node.traverse()
 
+    def __str__(self):
+        ret = 'SceneGraph containing:\n'
+        for node in self.traverse():
+            ret += str(node)
+            ret += '\n'
+        ret += 'End Scenegraph\n'
+        return ret
 
 class MeshNode(Node):
     """A class for meshes that tries to provide its data in a way an
