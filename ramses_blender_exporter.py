@@ -189,6 +189,12 @@ class Node():
         for child in self.children:
             child.teardown()
 
+    def traverse(self):
+        yield self
+
+        for child in self.children:
+            yield child
+
 class SceneGraph():
     """For every scene, a graph is created so we can translate concepts as close as possible"""
 
@@ -239,6 +245,12 @@ class SceneGraph():
         so the user does not end up with dangling resources which can be very
         memory intensive"""
         self.root.teardown()
+
+    def traverse(self, from_node: Node = None):
+        """Traverse the SceneGraph, optionally starting at 'from_node', but
+        usually from the root itself"""
+        node = from_node if from_node is not None else self.root
+        return node.traverse()
 
 
 class MeshNode(Node):
