@@ -12,7 +12,7 @@ import bmesh
 from . import RamsesPython
 import logging
 import mathutils
-from typing import List
+from typing import List, Any
 import math
 
 log = logging.getLogger(name='ramses-scene-exporter')
@@ -150,16 +150,67 @@ class Node():
         such as a point light or a camera"""
         return self.dimensions.length == 0
 
-    def find(self, node: Node) -> Node:
+    def contains(self, node: Node) -> bool:
+        """Whether this node or its children contains the argument"""
         if self == node:
-            return self
+            return True
 
         for child in self.children:
-            found = child.find(node)
+            found = child.contains(node)
             if found:
                 return found
 
-        return None
+        return False
+
+    def find(self, attribute: str, value: Any, n: int = 1) -> List[Node]:
+        """Search the hierarchy looking for nodes in which attribute == value
+
+        Arguments:
+            attribute {str} -- Any attribute contained in node.__dict__
+            value {Any} -- Any value to look for
+            n {int} -- The number of matches to return. Defaults to 1 \
+                and a value of 0 returns all matches
+
+        Returns:
+            List[Node] -- A list containing all the matches.
+        """
+
+        if n < 0:
+            raise RuntimeError
+
+        matches = []
+
+        for attr, val in self.__dict__.items():
+            if n and (len(matches) == n):
+                break
+
+            if attr.lower() == attribute.lower():
+                if val and (val == value):
+                    matches.append(self)
+
+        for child in self.children:
+            if n and (len(matches) == n):
+                break
+
+            found = child.find(attribute, value, n)
+            if found:
+                matches.extend(found)
+
+        return matches
+
+    def find_from_blender_object(self, blender_object: bpy.types.Object) -> List[Node]:
+        """A convenience method to find nodes based on the underlying Blender \
+            object
+
+        Arguments:
+            blender_object {bpy.types.Object} -- The object to look for in the \
+                hierarchy
+
+        Returns:
+            List[Node] -- A list with matches
+        """
+
+        return self.find(attribute='blender_object', value=blender_object, n=0)
 
     def add_child(self, node: Node):
         node.parent = self
@@ -225,14 +276,51 @@ class SceneGraph():
 
         if self.root is None:
             self.root = node
-        else:
-            parent = node.find(parent) if parent is not None else self.root
-            parent.add_child(node)
+
+        node_parent = self.__resolve_parenting(o)
+        node_parent.add_child(node)
 
         return node
 
-    def find(self, node: Node) -> Node:
-        return self.root.find(node)
+    def __resolve_parenting(self,
+                            blender_object: bpy.types.Object) -> Node:
+        """Attempts to find a parent for the argument in the graph. \
+            Uses the root node if no candidate node is found at first"""
+
+        parent_candidates = self.root.find_from_blender_object(blender_object.parent)
+
+        return parent_candidates[0] if parent_candidates else self.root
+
+    def contains(self, node: Node) -> bool:
+        """Whether this SceneGraph contains the argument"""
+        return self.root.contains(node)
+
+    def find(self, attribute: str, value: Any, n: int = 1) -> List[Node]:
+        """Search the SceneGraph looking for nodes in which attribute == value
+
+        Arguments:
+            attribute {str} -- Any attribute contained in a node
+            value {Any} -- Any value to look for
+            n {int} -- The number of matches to return. Defaults to 1 \
+                and a value of 0 returns all matches
+
+        Returns:
+            List[Node] -- A list containing all the matches.
+        """
+        return self.root.find(attribute, value, n)
+
+    def find_from_blender_object(self, blender_object: bpy.types.Object) -> List[Node]:
+        """A convenience method to find nodes based on the underlying Blender \
+            object
+
+        Arguments:
+            blender_object {bpy.types.Object} -- The object to look for in the \
+                hierarchy
+
+        Returns:
+            List[Node] -- A list with matches
+        """
+        return self.root.find_blender_object(blender_object=blender_object)
 
     def debug(self):
         """A convenience method so we can quickly check if a node does not
