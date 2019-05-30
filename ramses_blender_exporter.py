@@ -286,9 +286,9 @@ class SceneGraph():
 
         if self.root is None:
             self.root = node
-
-        node_parent = self.__resolve_parenting(o)
-        node_parent.add_child(node)
+        else:
+            node_parent = self.__resolve_parenting(o)
+            node_parent.add_child(node)
 
         return node
 
