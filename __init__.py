@@ -8,7 +8,7 @@
 
 bl_info = {
     "name": "RAMSES Scene Exporter",
-    "author": "#TODO",
+    "author": "Daniel Lima de Almeida",
     "version": (0, 0, 1),
     "blender": (2, 80, 0),
     "location": "View3D",
