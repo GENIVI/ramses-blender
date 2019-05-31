@@ -10,7 +10,14 @@ This exporter makes leveraging Blender - a powerful open source 3D modeller - po
 How do I install it?
 ====================
 
-Unzip this Python module into Blender's add-on directory. This is usually under **version/scripts/addons_contrib**.
+Build the plugin libraries with CMake, e.g.:
+```
+$mkdir build && cd build
+$cmake -DCMAKE_INSTALL_PREFIX=<path_to_install> ../
+$make install
+```
+
+Copy the contents of the installation folder to the Blender's add-on directory - it is usually under **version/scripts/addons_contrib**.
 
 For Arch Linux and Blender 2.79, for instance, that would be **/usr/share/blender/2.79/scripts/addons_contrib** assuming you have installed Blender from the official repositories.
 
@@ -25,3 +32,4 @@ How do I set up a development environment for contributing?
 I recommend building Blender from source and creating a symbolic link from **build_folder/bin/version/scripts/addons_contrib/ramses_scene_exporter** pointing to the directory into which you have cloned this repository. Notice *build_folder* and *version* refer to the directory where you have invoked the build command and the Blender version, respectively.
 
 I recommend using Visual Studio Code with either [this extension](https://marketplace.visualstudio.com/items?itemName=JacquesLucke.blender-development) - which simplifies matters greatly, as it facilitates installation, debugging and reloading of code - or at the very least a [debugger extension](https://github.com/AlansCodeLog/blender-debugger-for-vscode).
+
