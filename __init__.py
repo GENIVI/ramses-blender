@@ -36,7 +36,7 @@ import logging
 import random
 import time
 import gpu
-from .ramses_blender_exporter import RamsesBlenderExporter
+from .exporter import RamsesBlenderExporter
 
 
 log = logging.getLogger('ramses-scene-exporter')
