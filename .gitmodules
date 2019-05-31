@@ -1,0 +1,3 @@
+[submodule "ramses-python"]
+	path = external/ramses-python
+	url = https://github.com/GENIVI-Ramses/ramses-python.git
