@@ -1,3 +1,11 @@
+#  -------------------------------------------------------------------------
+#  Copyright (C) 2019 Daniel Lima de Almeida
+#  -------------------------------------------------------------------------
+#  This Source Code Form is subject to the terms of the Mozilla Public
+#  License, v. 2.0. If a copy of the MPL was not distributed with this
+#  file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#  -------------------------------------------------------------------------
+
 bl_info = {
     "name": "RAMSES Scene Exporter",
     "author": "#TODO",
@@ -130,3 +138,4 @@ def register():
 def unregister():
     bpy.utils.unregister_class(SceneDumpOperator)
     log.info("RAMSES Scene Exporter: Add-on unregistered.")
+
