@@ -241,9 +241,22 @@ class SceneGraph():
             else:
                 raise NotImplementedError
         elif o.type == 'LIGHT' or o.type == 'LAMP':
-            node = LightNode(o)
+            if o.data.type == 'POINT':
+                node = PointLightNode(o)
+            elif o.data.type == 'SUN':
+                node = SunLightNode(o)
+            elif o.data.type == 'SPOT':
+                node = SpotLightNode(o)
+            elif o.data.type == 'AREA':
+                node = AreaLightNode(o)
+
         else: # TODO: map EMPTIES to Node() ?
-            node = ObjectNode(o)
+
+            log.debug(f'IR SceneGraph: found node {o.type} in Blender \
+                which is currently not implemented.Adding a \
+                placeholder node.')
+
+            node = Node(name=f'Unresolved Blender node: {str(o)} of type {o.type}')
 
         if self.root is None:
             self.root = node
@@ -456,7 +469,6 @@ class PerspectiveCameraNode(CameraNode):
                     atan(math.tan(self.fov * 0.5) / self.aspect_ratio)
 
 
-
 class OrthographicCameraNode(CameraNode):
     def __init__(self, blender_object: bpy.types.Object):
 
@@ -464,3 +476,134 @@ class OrthographicCameraNode(CameraNode):
 
         self.x_mag = blender_object.data.ortho_scale
         self.y_mag = blender_object.data.ortho_scale
+
+
+class LightNode(Node):
+    def __init__(self, blender_object: bpy.types.Object):
+
+        super().__init__(blender_object=blender_object,
+                         name=blender_object.name_full)
+
+        # Pick everthing, just in case.
+
+        self.color = blender_object.data.color
+        self.cutoff_distance = blender_object.data.cutoff_distance
+        self.distance = blender_object.data.cutoff_distance
+        self.node_tree = None  # TODO
+        self.specular_factor = blender_object.data.specular_factor
+        self.use_nodes = False # TODO
+
+        self.contact_shadow_bias = blender_object.data.contact_shadow_bias
+        self.contact_shadow_distance = blender_object.data.contact_shadow_distance
+        self.contact_shadow_soft_size = blender_object.data.contact_shadow_soft_size
+        self.contact_shadow_thickness = blender_object.data.contact_shadow_thickness
+
+        self.energy = blender_object.data.energy
+
+        self.shadow_buffer_bias = blender_object.data.shadow_buffer_bias
+        self.shadow_buffer_bleed_bias = blender_object.data.shadow_buffer_bleed_bias
+        self.shadow_buffer_clip_end = blender_object.data.shadow_buffer_clip_end
+        self.shadow_buffer_clip_start = blender_object.data.shadow_buffer_clip_start
+        self.shadow_buffer_exp = blender_object.data.shadow_buffer_exp
+        self.shadow_buffer_samples = blender_object.data.shadow_buffer_samples
+        self.shadow_buffer_soft = blender_object.data.shadow_buffer_soft
+        self.shadow_color = blender_object.data.shadow_color
+        self.shadow_soft_size = blender_object.data.shadow_soft_size
+
+
+
+class PointLightNode(LightNode):
+    """Omnidirectional point Light"""
+
+    def __init__(self, blender_object: bpy.types.Object):
+
+        super().__init__(blender_object=blender_object)
+
+        if blender_object.data.type != 'POINT':
+            raise RuntimeError(f'Tried to init a PointLightNode with a \
+                incompatible Blender object')
+
+        self.constant_coefficient = blender_object.data.constant_coefficient
+
+        self.falloff_curve = blender_object.data.falloff_curve
+        self.falloff_type =  blender_object.data.falloff_type
+        self.linear_attenuation = blender_object.data.linear_attenuation
+        self.quadratic_coefficient = blender_object.data.quadratic_coefficient
+
+        self.use_contact_shadow = blender_object.data.use_contact_shadow
+        self.use_shadow = blender_object.data.use_shadow
+
+
+class SpotLightNode(LightNode):
+    """Directional cone Light"""
+
+    def __init__(self, blender_object: bpy.types.Object):
+
+        super().__init__(blender_object=blender_object)
+
+        if blender_object.data.type != 'SPOT':
+            raise RuntimeError(f'Tried to init a SpotLightNode with a \
+                incompatible Blender object')
+
+        self.constant_coefficient = blender_object.data.constant_coefficient
+
+        self.falloff_curve = blender_object.data.falloff_curve
+        self.falloff_type =  blender_object.data.falloff_type
+        self.linear_attenuation = blender_object.data.linear_attenuation
+        self.quadratic_coefficient = blender_object.data.quadratic_coefficient
+
+        self.show_cone = blender_object.data.show_cone
+        self.spot_size = blender_object.data.spot_size
+
+        self.use_contact_shadow = blender_object.data.use_contact_shadow
+        self.use_shadow = blender_object.data.use_shadow
+
+        self.use_square = blender_object.data.use_square
+
+
+class SunLightNode(LightNode):
+    """Constant direction parallel ray Light"""
+
+    def __init__(self, blender_object: bpy.types.Object):
+
+        super().__init__(blender_object=blender_object)
+
+        if blender_object.data.type != 'SUN':
+            raise RuntimeError(f'Tried to init a SunLightNode with a \
+                incompatible Blender object')
+
+        self.angle=blender_object.data.angle
+
+        self.shadow_cascade_count=blender_object.data.shadow_cascade_count
+        self.shadow_cascade_exponent=blender_object.data.shadow_cascade_exponent
+        self.shadow_cascade_fade=blender_object.data.shadow_cascade_fade
+        self.shadow_cascade_max_distance = blender_object.data.shadow_cascade_max_distance
+
+        self.use_contact_shadow = blender_object.data.use_contact_shadow
+        self.use_shadow = blender_object.data.use_shadow
+
+
+class AreaLightNode(LightNode):
+    """Directional area Light"""
+    def __init__(self, blender_object: bpy.types.Object):
+
+        super().__init__(blender_object=blender_object)
+
+        if blender_object.data.type != 'AREA':
+            raise RuntimeError(f'Tried to init a SunLightNode with a \
+                incompatible Blender object')
+
+        self.constant_coefficient = blender_object.data.constant_coefficient
+
+        self.falloff_curve = blender_object.data.falloff_curve
+        self.falloff_type =  blender_object.data.falloff_type
+        self.linear_attenuation = blender_object.data.linear_attenuation
+        self.quadratic_coefficient = blender_object.data.quadratic_coefficient
+
+
+        self.shadow_color = blender_object.data.shadow_color
+        self.shadow_soft_size = blender_object.data.shadow_soft_size
+
+        self.shape=blender_object.data.shape
+        self.size = blender_object.data.size
+        self.size_y=blender_object.data.size_y
