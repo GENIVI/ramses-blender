@@ -214,7 +214,7 @@ class Node():
         yield self
 
         for child in self.children:
-            yield child
+            yield child.traverse()
 
 class SceneGraph():
     """For every scene, a graph is created so we can translate concepts as close as possible"""
