@@ -58,6 +58,7 @@ class Node():
         self.children = []
         self.blender_object = blender_object
         self.name = name
+        self.location = mathutils.Vector((0.0, 0.0, 0.0))
 
         # See https://docs.blender.org/api/master/bpy.types.Object.html
         # Matrix access to location, rotation and scale (including deltas),
@@ -92,6 +93,7 @@ class Node():
             self.__init_from_blender_object(blender_object)
 
     def __init_from_blender_object(self, blender_object: bpy.types.Object):
+        self.location = blender_object.location
         self.matrix_basis = blender_object.matrix_basis
         self.matrix_local = blender_object.matrix_local
         self.matrix_parent_inverse = blender_object.matrix_parent_inverse

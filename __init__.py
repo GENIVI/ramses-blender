@@ -124,16 +124,10 @@ class SceneDumpOperator(bpy.types.Operator):
 
     def execute(self, context):
         scene = bpy.context.scene
-        clear_scene(scene)
-
-        monkey_create_random(scene, 5)
-
-        scene_print_objects(scene)
-        objects = scene_get_objects(scene)
-
 
         exporter = RamsesBlenderExporter(bpy.data.scenes)
         exporter.extract_from_blender_scene()
+        exporter.build_ramses_scene()
 
         return {'FINISHED'}
 
@@ -147,4 +141,3 @@ def register():
 def unregister():
     bpy.utils.unregister_class(SceneDumpOperator)
     log.info("RAMSES Scene Exporter: Add-on unregistered.")
-
