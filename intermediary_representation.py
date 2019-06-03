@@ -25,6 +25,7 @@ import logging
 import mathutils
 from typing import List, Any
 import math
+import itertools
 
 log = logging.getLogger(name='ramses-scene-exporter')
 
@@ -204,7 +205,7 @@ class Node():
         Returns:
             List[Float] -- The unpacked values in a Python list.
         """
-        return [vertex.co for vertex in vector_list]
+        return list(itertools.chain.from_iterable(vertex.co for vertex in vector_list))
 
     def teardown(self):
         for child in self.children:
