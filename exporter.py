@@ -59,7 +59,7 @@ class RamsesBlenderExporter():
 
         for scene_representation in self.scene_representations:
             ir_root = scene_representation.graph.root
-            ramses_root = self.__ramses_build_subscene(ramses_scene, ir_root, parent=None)
+            ramses_root = self._ramses_build_subscene(ramses_scene, ir_root, parent=None)
 
             log.debug(f'Successfully built RAMSES Scenegraph: {str(ramses_root)}')
 
@@ -75,7 +75,7 @@ class RamsesBlenderExporter():
             raise RuntimeError(validationReport)
 
 
-    def __ramses_build_subscene(self,
+    def _ramses_build_subscene(self,
                                 scene: RamsesPython.Scene,
                                 ir_node: Node,
                                 parent: RamsesPython.Node = None) -> RamsesPython.Node:
@@ -98,7 +98,7 @@ class RamsesBlenderExporter():
         current_ramses_node = self.translate(scene, ir_node) # TODO: add to render group
 
         for child in ir_node.children:
-            self.__ramses_build_subscene(scene, child, parent=current_ramses_node)
+            self._ramses_build_subscene(scene, child, parent=current_ramses_node)
 
         if parent:
             parent.addChild(current_ramses_node)

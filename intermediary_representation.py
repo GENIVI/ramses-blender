@@ -80,9 +80,9 @@ class Node():
         self.users_collections = []
 
         if blender_object:
-            self.__init_from_blender_object(blender_object)
+            self._init_from_blender_object(blender_object)
 
-    def __init_from_blender_object(self, blender_object: bpy.types.Object):
+    def _init_from_blender_object(self, blender_object: bpy.types.Object):
         self.location = blender_object.location
         self.matrix_basis = blender_object.matrix_basis
         self.matrix_local = blender_object.matrix_local
@@ -253,12 +253,12 @@ class SceneGraph():
         if self.root is None:
             self.root = node
         else:
-            node_parent = self.__resolve_parenting(o)
+            node_parent = self._resolve_parenting(o)
             node_parent.add_child(node)
 
         return node
 
-    def __resolve_parenting(self,
+    def _resolve_parenting(self,
                             blender_object: bpy.types.Object) -> Node:
         """Attempts to find a parent for the argument in the graph. \
             Uses the root node if no candidate node is found at first"""
