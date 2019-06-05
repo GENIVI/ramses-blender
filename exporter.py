@@ -1,5 +1,3 @@
-from __future__ import annotations # Needed in order for something to reference itself in 'typing'
-
 #  -------------------------------------------------------------------------
 #  Copyright (C) 2019 Daniel Werner Lima Souza de Almeida -
 #                     dwlsalmeida at gmail dot com
@@ -9,6 +7,7 @@ from __future__ import annotations # Needed in order for something to reference 
 #  file, You can obtain one at https://mozilla.org/MPL/2.0/.
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+from __future__ import annotations # Needed in order for something to reference itself in 'typing'
 import bpy
 from . import RamsesPython
 import logging
