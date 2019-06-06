@@ -23,13 +23,17 @@ set(ramses-python_INSTALL_PREFIX ${install_subdir})
 
 # Important! This version has to be binary compatible with the one shipped
 # with Blender!
+
+unset(PYTHONINTERP_FOUND CACHE)
+unset(PYTHON_EXECUTABLE CACHE)
 set(PYBIND11_PYTHON_VERSION 3.7)
 add_subdirectory(external/ramses-python)
 
 # Installation
 set(python_files
     __init__.py
-    ramses_blender_exporter.py
+    intermediary_representation.py
+    exporter.py
 )
 
 # TODO add options in ramses to disable installation, or at least provide folder options
