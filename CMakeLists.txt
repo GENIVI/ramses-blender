@@ -32,10 +32,8 @@ set(PYBIND11_PYTHON_VERSION 3.7)
 add_subdirectory(external/ramses-python)
 
 # Installation
-set(python_files
-    __init__.py
-    intermediary_representation.py
-    exporter.py
+file(GLOB python_files
+    *.py
 )
 
 set(CMAKE_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX_FROM_USER})
