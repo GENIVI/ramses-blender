@@ -216,13 +216,33 @@ class SceneGraph():
         self.root = root
         self.scene = scene
 
-    def add_node(self, o: bpy.types.Object, parent: Node = None) -> Node:
+    def add_node(self, o: bpy.types.Object = None, parent: Node = None) -> Node:
         log.debug(f"Adding Blender Object: {o} as a node for root {self.root} and {parent} as parent")
 
-        node = None
+        node = self._translate(o) if o else Node('Placeholder node')
+
+        if self.root is None:
+            self.root = node
+        else:
+            node_parent = parent if parent else self._resolve_parenting(o)
+            node_parent.add_child(node)
+
+        return node
+
+    def _translate(self, o: bpy.types.Object) -> Node:
+        """Translates a Blender object into an IR node / node hierarchy.
+
+        Arguments:
+            o {bpy.types.Object} -- The object to be translated
+
+        Returns:
+            Node -- The node / node hierarchy
+        """
 
         # See https://docs.blender.org/manual/en/dev/editors/3dview/object/types.html
         # See also https://docs.blender.org/manual/en/dev/editors/3dview/object/index.html
+        node = None
+
         if o.type == 'MESH':
             node = MeshNode(o)
         elif o.type == 'CAMERA':
@@ -250,12 +270,7 @@ class SceneGraph():
 
             node = Node(name=f'Unresolved Blender node: {str(o)} of type {o.type}')
 
-        if self.root is None:
-            self.root = node
-        else:
-            node_parent = self._resolve_parenting(o)
-            node_parent.add_child(node)
-
+        log.debug(f'Translated Blender object: {o.type} into {str(node)}')
         return node
 
     def _resolve_parenting(self,
