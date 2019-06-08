@@ -40,6 +40,9 @@ class SceneRepresentation():
         for o in self.objects:
             self.graph.add_node(o)
 
+    def teardown(self):
+        self.graph.teardown()
+
 class Node():
     """A base class for operations every node must support"""
 
@@ -202,6 +205,7 @@ class Node():
     def teardown(self):
         for child in self.children:
             child.teardown()
+        del self
 
     def traverse(self):
         yield self
@@ -340,6 +344,7 @@ placeholder node.')
         so the user does not end up with dangling resources which can be very
         memory intensive"""
         self.root.teardown()
+        del self
 
     def traverse(self, from_node: Node = None):
         """Traverse the SceneGraph, optionally starting at 'from_node', but

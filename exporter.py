@@ -64,7 +64,7 @@ class RamsesBlenderExporter():
             ramses_root = self._ramses_build_subscene(ramses_scene, ir_root, parent=None)
 
             log.debug(f'Successfully built RAMSES Scenegraph: {str(ramses_root)}')
-
+            scene_representation.teardown()
 
         sceneFile = "/tmp/scene.ramses"
         sceneResources = "/tmp/scene.ramres"
