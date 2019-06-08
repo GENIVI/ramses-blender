@@ -207,7 +207,7 @@ class Node():
         yield self
 
         for child in self.children:
-            yield child.traverse()
+            yield from child.traverse()
 
 class SceneGraph():
     """For every scene, a graph is created so we can translate concepts as close as possible"""
@@ -245,6 +245,16 @@ class SceneGraph():
 
         if o.type == 'MESH':
             node = MeshNode(o)
+
+            if len(node.get_faces()) == 0:
+                log.debug(f'Malformed mesh with no faces: {str(node)}. \
+                    Adding placeholder')
+                old_node = node
+                node = Node(blender_object=old_node.blender_object,
+                          name=f'Placeholder node for malformed \
+                              mesh with no faces: {str(old_node)}')
+                old_node.teardown()
+
         elif o.type == 'CAMERA':
             if o.data.type == 'PERSP':
                 node = PerspectiveCameraNode(o, self.scene)
