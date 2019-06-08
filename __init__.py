@@ -24,14 +24,14 @@ def in_development_mode():
     return 'bpy' in locals()
 
 import bpy
-import logging
+from . import debug_utils
 import random
 import time
 import gpu
 from .exporter import RamsesBlenderExporter
 
 
-log = logging.getLogger('ramses-scene-exporter')
+log = debug_utils.get_debug_logger()
 
 
 def monkey_create_random(scene, n: int):
@@ -117,6 +117,7 @@ class SceneDumpOperator(bpy.types.Operator):
     def execute(self, context):
         scene = bpy.context.scene
 
+        debug_utils.setup_logging('debug.txt') # TODO: set up as an option for the end user.
         exporter = RamsesBlenderExporter(bpy.data.scenes)
         exporter.extract_from_blender_scene()
         exporter.build_ramses_scene()

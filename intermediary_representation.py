@@ -11,13 +11,13 @@ from __future__ import annotations # Needed in order for something to reference 
 import bpy
 import bmesh
 from . import RamsesPython
-import logging
+from . import debug_utils
 import mathutils
 from typing import List, Any
 import math
 import itertools
 
-log = logging.getLogger(name='ramses-scene-exporter')
+log = debug_utils.get_debug_logger()
 
 class SceneRepresentation():
     """Defines a minimal representation we want to be able to support in
@@ -209,24 +209,30 @@ class Node():
         for child in self.children:
             yield from child.traverse()
 
+    def __str__(self):
+        return f'IRNode of type: {type(self)} and name: {self.name}'
+
 class SceneGraph():
     """For every scene, a graph is created so we can translate concepts as close as possible"""
 
-    def __init__(self, scene: bpy.types.Scene, root: Node = Node()):
+    def __init__(self, scene: bpy.types.Scene, root: Node = Node(name='Root node')):
         self.root = root
         self.scene = scene
 
     def add_node(self, o: bpy.types.Object = None, parent: Node = None) -> Node:
-        log.debug(f"Adding Blender Object: {o} as a node for root {self.root} and {parent} as parent")
 
         node = self._translate(o) if o else Node('Placeholder node')
+        node_parent = None
 
         if self.root is None:
+            node.name += ' ' + '(Root node)'
+            log.debug(f'No root node for this SceneGraph, adding {str(node)} as root')
             self.root = node
         else:
             node_parent = parent if parent else self._resolve_parenting(o)
             node_parent.add_child(node)
 
+        log.debug(f"Adding: {node} with Blender Object: {o} and: {node_parent} as parent")
         return node
 
     def _translate(self, o: bpy.types.Object) -> Node:
@@ -248,11 +254,11 @@ class SceneGraph():
 
             if len(node.get_faces()) == 0:
                 log.debug(f'Malformed mesh with no faces: {str(node)}. \
-                    Adding placeholder')
+Adding placeholder.')
                 old_node = node
                 node = Node(blender_object=old_node.blender_object,
                           name=f'Placeholder node for malformed \
-                              mesh with no faces: {str(old_node)}')
+mesh with no faces: {str(old_node)}')
                 old_node.teardown()
 
         elif o.type == 'CAMERA':
@@ -274,13 +280,13 @@ class SceneGraph():
 
         else: # TODO: map EMPTIES to Node() ?
 
-            log.debug(f'IR SceneGraph: found node {o.type} in Blender \
-                which is currently not implemented.Adding a \
-                placeholder node.')
+            log.debug(f'IR SceneGraph: found node: {o.name} of type: {o.type} \
+in Blender which is currently not implemented. Adding a \
+placeholder node.')
 
             node = Node(name=f'Unresolved Blender node: {str(o)} of type {o.type}')
 
-        log.debug(f'Translated Blender object: {o.type} into {str(node)}')
+        log.debug(f'Translated Blender object: {o.name} of type: {o.type} into {str(node)}')
         return node
 
     def _resolve_parenting(self,
@@ -343,18 +349,25 @@ class SceneGraph():
 
     def __str__(self):
         ret = 'SceneGraph containing:\n'
-        for node in self.traverse():
-            ret += str(node)
-            ret += '\n'
+        ret += self.pretty_print_graph(self.root)
         ret += 'End Scenegraph\n'
         return ret
+
+    def pretty_print_graph(self, current_node, indentation=0):
+        current_string = (' ' * indentation) + str(current_node) + '\n'
+        indentation += 4
+
+        for child in current_node.children:
+            current_string += self.pretty_print_graph(child, indentation)
+
+        return current_string
 
 class MeshNode(Node):
     """A class for meshes that tries to provide its data in a way an
     OpenGL-powered renderer would expect"""
 
     def __init__(self, blender_object: bpy.types.Object):
-        super().__init__(blender_object)
+        super().__init__(blender_object, name = blender_object.name_full)
         self.mesh = None
         self.init_memory_mesh()
 
@@ -365,11 +378,11 @@ class MeshNode(Node):
     def init_memory_mesh(self, triangulate=True):
         bmesh_handle = bmesh.new()
         bmesh_handle.from_mesh(self.blender_object.to_mesh())
-        log.debug(f'Instantiated BMesh {self.mesh} for MeshNode: {self.name}')
+        log.debug(f'Instantiated BMesh {bmesh_handle} for MeshNode: {self.name}')
 
         if triangulate:
             MeshNode.triangulate_mesh(mesh=bmesh_handle, faces=bmesh_handle.faces)
-            log.debug(f'Triangulated mesh: {self.mesh}')
+            log.debug(f'Triangulated mesh: {bmesh_handle}')
 
         self.mesh = bmesh_handle
 

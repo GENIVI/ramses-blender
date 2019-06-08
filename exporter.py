@@ -10,11 +10,11 @@
 from __future__ import annotations # Needed in order for something to reference itself in 'typing'
 import bpy
 from . import RamsesPython
-import logging
+from . import debug_utils
 from .intermediary_representation import *
 from typing import List
 
-log = logging.getLogger(name='ramses-scene-exporter')
+log = debug_utils.get_debug_logger()
 
 class RamsesBlenderExporter():
     """Extracts the scene graph, translating it to a RAMSES scene"""
@@ -58,6 +58,9 @@ class RamsesBlenderExporter():
 
         for scene_representation in self.scene_representations:
             ir_root = scene_representation.graph.root
+            debug_utils.get_debug_logger().debug(\
+                f'Intermediary representation consists of:\n{str(scene_representation.graph)}')
+
             ramses_root = self._ramses_build_subscene(ramses_scene, ir_root, parent=None)
 
             log.debug(f'Successfully built RAMSES Scenegraph: {str(ramses_root)}')
@@ -93,7 +96,7 @@ class RamsesBlenderExporter():
             RamsesPython.Node -- The built node / scene graph
         """
 
-        log.debug(f'Building subscene for node {str(ir_node)}')
+        log.debug(f'Building subscene for node: {str(ir_node)}')
         current_ramses_node = self.translate(scene, ir_node) # TODO: add to render group
 
         for child in ir_node.children:
