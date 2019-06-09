@@ -99,7 +99,8 @@ class RamsesBlenderExporter():
                                scene: RamsesPython.Scene,
                                ir_node: Node,
                                exportable_scene: ExportableScene,
-                               parent: RamsesPython.Node = None) -> RamsesPython.Node:
+                               parent: RamsesPython.Node = None,
+                               current_depth = 0) -> RamsesPython.Node:
 
         """Builds a RAMSES scene graph starting from 'node' and
         optionally adds it as a child to 'parent'
@@ -112,17 +113,26 @@ class RamsesBlenderExporter():
         Keyword Arguments:
             parent {RamsesPython.Node} -- The optional RAMSES parent node (default: {None})
             exportable_scene {ExportableScene} -- sets up RenderGroups and RenderPasses.
+            current_depth {int} - Optional information to aid in debugging.
 
         Returns:
             RamsesPython.Node -- The built node / scene graph
         """
 
-        log.debug(f'Building subscene for node: {str(ir_node)}')
+        log.debug((' ' * current_depth * 4) +
+                  f'Building subscene for node: "{str(ir_node)}", parent is "{str(parent)}"')
 
         current_ramses_node = self.translate(scene, ir_node, exportable_scene=exportable_scene)
 
+        if ir_node.children:
+            current_depth += 1
+
         for child in ir_node.children:
-            self._ramses_build_subscene(scene, child, exportable_scene, parent=current_ramses_node)
+            self._ramses_build_subscene(scene,
+                                        child,
+                                        exportable_scene,
+                                        parent=current_ramses_node,
+                                        current_depth=current_depth)
 
         if parent:
             parent.addChild(current_ramses_node)
@@ -237,7 +247,7 @@ class RamsesBlenderExporter():
         else:
             raise NotImplementedError(f"Cannot translate node: {str(ir_node)} !")
 
-        log.debug(f'Translated IRNode {str(ir_node)} into {returned_node}')
+        log.debug(f'Translated IRNode "{str(ir_node)}" into "{returned_node}"')
         # TODO: get RAMSES node name from bindings
 
         return returned_node

@@ -236,7 +236,7 @@ class SceneGraph():
             node_parent = parent if parent else self._resolve_parenting(o)
             node_parent.add_child(node)
 
-        log.debug(f"Adding: {node} with Blender Object: {o} and: {node_parent} as parent")
+        log.debug(f'Scene graph: adding "{node}" with Blender Object: "{o}". Parent is: "{node_parent}"')
         return node
 
     def _translate(self, o: bpy.types.Object) -> Node:
@@ -391,6 +391,7 @@ class MeshNode(Node):
 
     def teardown(self):
         super().teardown()
+        log.debug(f'Freeing allocated BMesh object: "{self.mesh}"')
         self.mesh.free()
 
     def init_memory_mesh(self, triangulate=True):
