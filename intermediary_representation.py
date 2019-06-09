@@ -331,7 +331,7 @@ placeholder node.')
         Returns:
             List[Node] -- A list with matches
         """
-        return self.root.find_blender_object(blender_object=blender_object)
+        return self.root.find_from_blender_object(blender_object=blender_object)
 
     def debug(self):
         """A convenience method so we can quickly check if a node does not
