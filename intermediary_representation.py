@@ -367,6 +367,19 @@ placeholder node.')
 
         return current_string
 
+    def as_groups(self) -> List[GroupNode]:
+        """Returns a list of nodes, each representing a Blender view layer.
+
+        This method creates a parent 'GroupNode' and assign it children.
+        Aside from the root nodes no other nodes are created, only
+        references to the IR SceneGraph are taken.
+
+        Returns:
+            List[GroupNode] -- A list of GroupNodes
+        """
+        return [GroupNode(self, view_layer) for view_layer in self.scene.view_layers]
+
+
 class MeshNode(Node):
     """A class for meshes that tries to provide its data in a way an
     OpenGL-powered renderer would expect"""
@@ -642,3 +655,29 @@ class AreaLightNode(LightNode):
         self.shape=blender_object.data.shape
         self.size = blender_object.data.size
         self.size_y=blender_object.data.size_y
+
+
+class GroupNode(Node):
+    """A node that represents a group of nodes. Should only be created
+    after the full scene graph is created so the it can find any
+    object it references in the scene graph"""
+
+    def __init__(self, scene_graph: SceneGraph, view_layer: bpy.types.ViewLayer):
+
+        super().__init__(name=f'GroupNode for {view_layer.name}')
+
+        """While most nodes were defined with a pointer to their parent,
+        groups hold pointers to their children and do not change the
+        existing hierarchy"""
+        # TODO: plenty of other interesting options in this bpy_struct,
+        # maybe we could use it some more?
+
+        self.scene_graph = scene_graph
+        self.view_layer = view_layer
+        self.use = view_layer.use
+        self.children = []
+
+        for blender_object in self.view_layer.objects:
+            ir_nodes = self.scene_graph.find_from_blender_object(blender_object)
+            assert len(ir_nodes) == 1
+            self.children.extend(ir_nodes)

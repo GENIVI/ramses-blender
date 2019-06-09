@@ -23,6 +23,11 @@ class RamsesBlenderExporter():
         self.scenes = scenes
         self.scene_representations = []
         self.ready_to_translate = False
+        self.ramses = RamsesPython.Ramses("RAMSES Framework Handle")
+        self.exportable_scenes = []
+
+    def get_exportable_scenes(self) -> List[ExportableScene]:
+        return self.exportable_scenes
 
     def extract_from_blender_scene(self):
         """Extract the scene graph from Blender, building an internal
@@ -35,52 +40,66 @@ class RamsesBlenderExporter():
 
         self.ready_to_translate = True
 
-    def build_ramses_scene(self):
+    def build_from_extracted_representations(self):
+        for representation in self.scene_representations:
+            ramses_scene = self.build_ramses_scene(representation)
+            self.exportable_scenes.append(ramses_scene)
+
+    def build_ramses_scene(self,
+                           scene_representation: SceneRepresentation) -> ExportableScene:
         """Builds a RAMSES scene out of the available scene \
             representations
+
+        Arguments:
+            scene_representation {SceneRepresentation} -- The scene \
+                representation previously extracted from Blender.
 
         Raises:
             RuntimeError: Raised when 'extract_from_blender_scene' is \
                 not called first.
+
+        Returns:
+            ExportableScene -- A scene that is ready to be visualized / saved.
         """
 
         if not self.ready_to_translate:
             raise RuntimeError("Extract data from Blender first.")
 
-        ramses = RamsesPython.Ramses("test")
 
-        ramses_scene = ramses.createScene("test scene")
+        ramses_scene = self.ramses.createScene("test scene")
 
-        ramses_render_group = ramses_scene.createRenderGroup('rendergroup')
-        ramses_render_pass = ramses_scene.createRenderPass('renderpass')
+        ir_root = scene_representation.graph.root
+        ir_groups = scene_representation.graph.as_groups()
 
-        ramses_render_pass.addRenderGroup(ramses_render_group, 0)
+        exportable_scene = ExportableScene(self.ramses, ramses_scene)
+        exportable_scene.groups = self._build_ramses_render_groups(ramses_scene, ir_groups)
+        exportable_scene.passes = self._build_ramses_render_passes(ramses_scene, ir_root)
+        exportable_scene.ir_groups = ir_groups
 
-        for scene_representation in self.scene_representations:
-            ir_root = scene_representation.graph.root
-            debug_utils.get_debug_logger().debug(\
-                f'Intermediary representation consists of:\n{str(scene_representation.graph)}')
+        log.debug(\
+            f'Intermediary representation consists of:\n{str(scene_representation.graph)}')
 
-            ramses_root = self._ramses_build_subscene(ramses_scene, ir_root, parent=None)
+        ramses_root = self._ramses_build_subscene(ramses_scene,
+                                                  ir_root,
+                                                  parent=None,
+                                                  exportable_scene=exportable_scene)
 
-            log.debug(f'Successfully built RAMSES Scenegraph: {str(ramses_root)}')
-            scene_representation.teardown()
+        log.debug(f'Successfully built RAMSES Scenegraph: {str(ramses_root)}. Tearing down the IR graph')
+        scene_representation.teardown()
 
-        sceneFile = "/tmp/scene.ramses"
-        sceneResources = "/tmp/scene.ramres"
-        ramses_scene.saveToFiles(sceneFile, sceneResources, True)
-        validationReport = str(ramses_scene.getValidationReport())
+        exportable_scene.bind_groups_to_passes()
 
+        validation_report = exportable_scene.get_validation_report()
+        log.debug(f"Validation report for scene {str(exportable_scene.ramses_scene)}:\n{validation_report}")
 
-        log.debug(f"Validation report for scene {str(ramses_scene)}:\n{validationReport}")
-        if validationReport != '':
-            raise RuntimeError(validationReport)
+        return exportable_scene
 
 
     def _ramses_build_subscene(self,
-                                scene: RamsesPython.Scene,
-                                ir_node: Node,
-                                parent: RamsesPython.Node = None) -> RamsesPython.Node:
+                               scene: RamsesPython.Scene,
+                               ir_node: Node,
+                               exportable_scene: ExportableScene,
+                               parent: RamsesPython.Node = None) -> RamsesPython.Node:
 
         """Builds a RAMSES scene graph starting from 'node' and
         optionally adds it as a child to 'parent'
@@ -88,19 +107,22 @@ class RamsesBlenderExporter():
         Arguments:
             scene {RamsesPython.Scene} -- The scene to build nodes from
             ir_node {Node} -- The IRNode to begin from
+            render_group {RamsesPython.RenderGroup} -- The group to add the subscene to
 
         Keyword Arguments:
             parent {RamsesPython.Node} -- The optional RAMSES parent node (default: {None})
+            exportable_scene {ExportableScene} -- sets up RenderGroups and RenderPasses.
 
         Returns:
             RamsesPython.Node -- The built node / scene graph
         """
 
         log.debug(f'Building subscene for node: {str(ir_node)}')
-        current_ramses_node = self.translate(scene, ir_node) # TODO: add to render group
+
+        current_ramses_node = self.translate(scene, ir_node, exportable_scene=exportable_scene)
 
         for child in ir_node.children:
-            self._ramses_build_subscene(scene, child, parent=current_ramses_node)
+            self._ramses_build_subscene(scene, child, exportable_scene, parent=current_ramses_node)
 
         if parent:
             parent.addChild(current_ramses_node)
@@ -108,13 +130,14 @@ class RamsesBlenderExporter():
         return current_ramses_node
 
 
-    def translate(self, scene: RamsesPython.Scene, ir_node: Node) -> RamsesPython.Node:
+    def translate(self, scene: RamsesPython.Scene, ir_node: Node, exportable_scene: ExportableScene = None) -> RamsesPython.Node:
         """Translates the IRNode into a RAMSES node / graph
 
         Arguments:
             ir_node {Node} -- The node to be translated
             scene {RamsesPython.Scene} -- The current RAMSES Scene to \
                 create the node from
+            exportable_scene {ExportableScene} -- optional: sets up RenderGroups and RenderPasses.
 
         Returns:
             RamsesPython.Node -- The translated node / graph
@@ -186,6 +209,9 @@ class RamsesBlenderExporter():
                                             ir_node.location[2])
             translation_node.addChild(ramses_mesh_node)
 
+            if exportable_scene:
+                self._add_to_render_groups(exportable_scene, ir_node, ramses_mesh_node)
+
             returned_node = translation_node
 
         elif isinstance(ir_node, PerspectiveCameraNode):
@@ -197,6 +223,9 @@ class RamsesBlenderExporter():
             ramses_camera_node = scene.createPerspectiveCamera(name)
             ramses_camera_node.setViewport(0, 0, int(ir_node.width), int(ir_node.height))
             ramses_camera_node.setFrustumFromFoV(fov, aspect_ratio, z_near, z_far)
+
+            if exportable_scene:
+                self._add_to_render_passes(exportable_scene, ir_node, ramses_camera_node)
 
             returned_node = ramses_camera_node
 
@@ -210,8 +239,83 @@ class RamsesBlenderExporter():
 
         log.debug(f'Translated IRNode {str(ir_node)} into {returned_node}')
         # TODO: get RAMSES node name from bindings
+
         return returned_node
 
+    def _build_ramses_render_groups(self,
+                                    ramses_scene: RamsesPython.Scene,
+                                    ir_groups: List[Node]) -> List[RamsesPython.RenderGroup]:
+        """Builds a RAMSES RenderGroup for each GroupNode in the IR.
+
+        Arguments:
+            ramses_scene {RamsesPython.Scene} -- The RAMSES Scene
+            ir_groups {List[Node]} -- A list of IR Group Nodes.
+
+        Returns:
+            List[RamsesPython.RenderGroup] -- A list of RAMSES RenderGroups for each GroupNode in the IR.
+        """
+        return {group.name : ramses_scene.createRenderGroup(group.name) for group in ir_groups}
+
+    def _build_ramses_render_passes(self,
+                                    ramses_scene: RamsesPython.Scene,
+                                    ir_root: Node) -> List[RamsesPython.RenderPass]:
+        """Builds a RAMSES RenderPass for each CameraNode in the scene.
+
+        Arguments:
+            ramses_scene {RamsesPython.Scene} -- [description]
+            ir_root {Node} -- [description]
+
+        Returns:
+            List[RamsesPython.RenderPass] -- [description]
+        """
+        ret = {}
+
+        for ir_node in ir_root.traverse():
+            if isinstance(ir_node, CameraNode):
+                ret[ir_node.name] = ramses_scene.createRenderPass(f'Render pass for {ir_node.name}')
+
+        return ret
+
+    def _add_to_render_groups(self, exportable_scene, ir_node, ramses_mesh_node):
+        for ir_group in exportable_scene.ir_groups:
+            if ir_group.contains(ir_node):
+                #TODO: render order
+                exportable_scene.groups[ir_group.name].addMesh(ramses_mesh_node, 0)
+
+    def _add_to_render_passes(self, exportable_scene, ir_camera_node, ramses_camera_node):
+        for ir_group in exportable_scene.ir_groups:
+            if ir_group.contains(ir_camera_node):
+                exportable_scene.passes[ir_camera_node.name].setCamera(ramses_camera_node)
+
+
+class ExportableScene():
+    """A RAMSES Scene ready to be visualized / saved"""
+    def __init__(self, ramses, ramses_scene):
+        self.ramses = ramses
+        self.ramses_scene = ramses_scene
+        self.ir_groups = []
+        self.groups = {}
+        self.passes = {}
+
+    def save(self):
+        scene_file = "/tmp/scene.ramses"
+        scene_resources = "/tmp/scene.ramres" # TODO: make configurable
+        self.ramses_scene.saveToFiles(scene_file, scene_resources, True)
+
+    def get_validation_report(self):
+        return str(self.ramses_scene.getValidationReport())
+
+    def is_valid(self):
+        report = self.get_validation_report()
+        return len(report) == 0
+
+    def bind_groups_to_passes(self):
+        for render_pass in self.passes.values():
+            group_order = 0 #TODO improve this.
+
+            for render_group in self.groups.values():
+                render_pass.addRenderGroup(render_group, group_order)
+                group_order += 1
 
 
 class BlenderRamsesExtractor():

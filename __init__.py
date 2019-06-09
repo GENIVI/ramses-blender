@@ -120,10 +120,17 @@ class SceneDumpOperator(bpy.types.Operator):
         debug_utils.setup_logging('debug.txt') # TODO: set up as an option for the end user.
         exporter = RamsesBlenderExporter(bpy.data.scenes)
         exporter.extract_from_blender_scene()
-        exporter.build_ramses_scene()
+        exporter.build_from_extracted_representations()
+
+        for exportable_scene in exporter.get_exportable_scenes():
+
+            if not exportable_scene.is_valid():
+                validation_report = exportable_scene.get_validation_report()
+                raise RuntimeError(validation_report)
+
+            exportable_scene.save()
 
         return {'FINISHED'}
-
 
 def register():
     log.info("RAMSES Scene Exporter: Add-on registered.")
