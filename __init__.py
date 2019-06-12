@@ -20,22 +20,48 @@ bl_info = {
     "tracker-url": ""
 }
 
-def in_development_mode():
-    return 'bpy' in locals()
+# Copied from gltf-Blender-IO.
+# NOTE: Most extensions take care when reloading imports due to caching
+#
+# Script reloading (if the user calls 'Reload Scripts' from Blender)
+#
+def reload_package(module_dict_main):
+    import importlib
+    from pathlib import Path
 
-import bpy
+    def reload_package_recursive(current_dir, module_dict):
+        for path in current_dir.iterdir():
+            if "__init__" in str(path) or path.stem not in module_dict:
+                continue
+
+            if path.is_file() and path.suffix == ".py":
+                importlib.reload(module_dict[path.stem])
+            elif path.is_dir():
+                reload_package_recursive(path, module_dict[path.stem].__dict__)
+
+    reload_package_recursive(Path(__file__).parent, module_dict_main)
+
+if "bpy" in locals():
+    reload_package(locals())
+
+import bpy # NOTE: the bpy import must come below the module reload code
 from . import debug_utils
 from .exporter import RamsesBlenderExporter
 
 
 log = debug_utils.get_debug_logger()
 
+def addon_reload():
+    bpy.ops.preferences.addon_disable(module=__name__)
+    bpy.ops.preferences.addon_enable(module=__name__)
+    reload_package(locals())
 
 class SceneDumpOperator(bpy.types.Operator):
     bl_idname = "object.scenedumpoperator"
     bl_label = "SceneDumpOperator"
 
     def execute(self, context):
+        addon_reload()
         scene = bpy.context.scene
 
         debug_utils.setup_logging('debug.txt') # TODO: set up as an option for the end user.
