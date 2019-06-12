@@ -37,6 +37,12 @@ class RamsesBlenderExporter():
             extractor = BlenderRamsesExtractor(scene)
             representation = extractor.run()
             self.scene_representations.append(representation)
+            """ While this is not a 1:1 translation, if we've created way more
+            nodes than there were objects then this might be indicative of a
+            bug somewhere. Start checking after a minimum number of nodes"""
+            assert representation.graph.node_count() < 20 or \
+                (representation.graph.node_count() <= \
+                len(representation.scene.objects) * 1.25), "Too many objects were created"
 
         self.ready_to_translate = True
 

@@ -128,6 +128,14 @@ class Node():
 
         return False
 
+    def node_count(self) -> int:
+        """Counts the number of nodes in the hierarchy
+
+        Returns:
+            int -- The number of nodes in the hierarchy
+        """
+        return len([node for node in self.traverse()])
+
     def find(self, attribute: str, value: Any, n: int = 1) -> List[Node]:
         """Search the hierarchy looking for nodes in which attribute == value
 
@@ -228,13 +236,17 @@ class SceneGraph():
         node = self._translate(o) if o else Node('Placeholder node')
         node_parent = None
 
-        if self.root is None:
+        if self.is_uninitialized():
             node.name += ' ' + '(Root node)'
             log.debug(f'No root node for this SceneGraph, adding {str(node)} as root')
             self.root = node
+            node.parent = None
         else:
             node_parent = parent if parent else self._resolve_parenting(o)
             node_parent.add_child(node)
+
+        assert self.root
+        assert self.root.parent is None
 
         log.debug(f'Scene graph: adding "{node}" with Blender Object: "{o}". Parent is: "{node_parent}"')
         return node
@@ -306,6 +318,31 @@ placeholder node.')
         """Whether this SceneGraph contains the argument"""
         return self.root.contains(node)
 
+    def node_count(self, from_node: Node = None) -> int:
+        """Return the number of nodes in this graph, optionally starting
+        from 'from_node' but usually from root.
+
+        Keyword Arguments:
+            from_node {Node} -- optional node to start counting from
+            (default: {None})
+
+        Returns:
+            int -- The number of nodes counted
+        """
+        if self.is_uninitialized():
+            return 0
+
+        node = from_node if from_node else self.root
+        assert node
+
+        count = node.node_count()
+        assert count > 0
+
+        return count
+
+    def is_uninitialized(self):
+        return self.root is None
+
     def find(self, attribute: str, value: Any, n: int = 1) -> List[Node]:
         """Search the SceneGraph looking for nodes in which attribute == value
 
@@ -350,6 +387,7 @@ placeholder node.')
         """Traverse the SceneGraph, optionally starting at 'from_node', but
         usually from the root itself"""
         node = from_node if from_node is not None else self.root
+        assert node
         return node.traverse()
 
     def __str__(self):
