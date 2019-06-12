@@ -46,9 +46,15 @@ if "bpy" in locals():
 
 import bpy # NOTE: the bpy import must come below the module reload code
 import pathlib
+import os
 from . import debug_utils
 from .ramses_inspector import RamsesInspector
 from .exporter import RamsesBlenderExporter
+from bpy_extras.io_utils import ExportHelper
+from bpy.props import (
+    StringProperty,
+    BoolProperty
+)
 
 
 log = debug_utils.get_debug_logger()
@@ -58,22 +64,78 @@ def addon_reload():
     bpy.ops.preferences.addon_enable(module=__name__)
     reload_package(locals())
 
-class SceneDumpOperator(bpy.types.Operator):
-    bl_idname = "object.scenedumpoperator"
-    bl_label = "SceneDumpOperator"
+def auto_find_viewer_path():
+    pwd = pathlib.Path.cwd()
+
+    #TODO: improve this?
+    viewer_bin = 'ramses-scene-viewer'
+    viewer_suffix = ''
+
+    if os.name == 'nt':
+        viewer_suffix = 'windows'
+    elif os.name == 'posix':
+        # Favor X11, user can change it if desired.
+        viewer_suffix = 'x11'
+
+    file_name = f'{viewer_bin}-{viewer_suffix}*'
+    matches = list(pwd.rglob(file_name))
+    return matches[0] # The first match
+
+def menu_func_export(self, context):
+    """Sets up the entry in the export menu when appropriately registered
+    in __init__.py"""
+    self.layout.operator(RamsesExportOperator.bl_idname, text='RAMSES Scenes (.ramses, .ramres)')
+
+
+class RamsesExportOperator(bpy.types.Operator):
+    bl_idname = "export_scene.ramses"
+    bl_label = "Export as RAMSES scenes"
+
+    use_filter = True
+    use_filter_folder = True
+    filter_folder: bpy.props.BoolProperty(default=True, options={'HIDDEN'})
+
+    """The output directory. Must be named 'directory' as this is how
+    'fileselect' expects it"""
+    directory: bpy.props.StringProperty(name="Current export path",
+                                        description="Path where the resulting scene files will be saved",
+                                        subtype='DIR_PATH')
+
+    viewer_path: bpy.props.StringProperty(#name='Path to the RAMSES Scene Viewer',
+                                          description='The RAMSES Scene Viewer aids '
+                                          + 'in finding errors in the exported scene. '
+                                          + 'The viewer for your platform should be located '
+                                          + 'inside the bin directory of the installation '
+                                          + 'directory. Leaving empty will cause the viewer '
+                                          + 'to not launch, but specifying a incorrect path '
+                                          + 'will cause an error',
+                                          default=str(auto_find_viewer_path()))
+
+    emit_debug_files: bpy.props.BoolProperty(name='Emit debug files',
+                                             default=True,
+                                             description='Whether to emit a debug file with '
+                                             + 'the carried out operations. If chosen, will '
+                                             + 'write a debug.txt file')
+
+    def invoke(self, context, event):
+        context.window_manager.fileselect_add(self)
+        return {'RUNNING_MODAL'}
 
     def execute(self, context):
         addon_reload()
-        scene = bpy.context.scene
 
-        debug_utils.setup_logging('debug.txt') # TODO: set up as an option for the end user.
+        if self.emit_debug_files:
+            debug_utils.setup_logging(f'{self.directory}debug.txt') # Master log file
+
         exporter = RamsesBlenderExporter(bpy.data.scenes)
         exporter.extract_from_blender_scene()
         exporter.build_from_extracted_representations()
 
         for exportable_scene in exporter.get_exportable_scenes():
 
-            inspector = RamsesInspector(exportable_scene, pathlib.Path()) # TODO: get path from UI
+            viewer_path = pathlib.Path(self.viewer_path) if self.viewer_path else None
+            exportable_scene.set_output_dir(self.directory)
+            inspector = RamsesInspector(exportable_scene, viewer_path)
             inspector.load_viewer()
 
             if not exportable_scene.is_valid():
@@ -84,12 +146,47 @@ class SceneDumpOperator(bpy.types.Operator):
 
         return {'FINISHED'}
 
+    def draw(self, context):
+        layout = self.layout
+        scn = context.scene
+
+        # UI draw code
+        col = layout.column()
+        row = col.row(align=True)
+
+        row = row.split(factor=0.6)
+        left_col = row.column()
+        left_col.label(text='Absolute path to the RAMSES Scene Viewer')
+        right_col = row.column()
+        right_col.prop(self, 'viewer_path', text='')
+
+        row = col.row()
+        row.prop(self, 'emit_debug_files')
+
+
+classes = (
+    # Add all classes that must be registered and unregistered
+    RamsesExportOperator,
+)
+
 def register():
-    log.info("RAMSES Scene Exporter: Add-on registered.")
-    bpy.utils.register_class(SceneDumpOperator)
+    """All classes that inherit from bpy must be registered / unregistered"""
+
+    for c in classes:
+        bpy.utils.register_class(c)
+
+    # Append a entry to Blender's 'export' menu
+    bpy.types.TOPBAR_MT_file_export.append(menu_func_export)
+
     print("RAMSES Scene Exporter: Add-on registered.")
+    log.info("RAMSES Scene Exporter: Add-on registered.")
 
 
 def unregister():
-    bpy.utils.unregister_class(SceneDumpOperator)
+    for c in reversed(classes):
+        bpy.utils.unregister_class(c)
+
+    bpy.types.TOPBAR_MT_file_export.remove(menu_func_export)
+
     log.info("RAMSES Scene Exporter: Add-on unregistered.")
+    print("RAMSES Scene Exporter: Add-on unregistered.")

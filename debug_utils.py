@@ -3,6 +3,8 @@ import bpy
 import random
 import time
 
+logging_file_handles = {}
+
 def setup_logging(fname: str):
     with open(fname, 'w') as f:
         f.truncate()
@@ -10,17 +12,23 @@ def setup_logging(fname: str):
     logger = logging.getLogger('ramses-scene-exporter')
     logger.setLevel(logging.DEBUG)
 
-    # create file handler which logs even debug messages
-    fh = logging.FileHandler(fname)
-    fh.setLevel(logging.DEBUG)
+    logger_set_file(logger, fname)
 
+def logger_set_file(logger, fname: str):
+    fh = logging.FileHandler(fname)
 
     # create formatter and add it to the handlers
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     fh.setFormatter(formatter)
 
     # add the handlers to the logger
+    logging_file_handles[fname] = fh
     logger.addHandler(fh)
+
+def logger_unset_file(logger, fname: str):
+        fh = logging_file_handles[fname]
+        logger.removeHandler(fh)
+        del logging_file_handles[fname]
 
 def get_debug_logger():
     return logging.getLogger('ramses-scene-exporter')

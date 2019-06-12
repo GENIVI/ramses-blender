@@ -11,11 +11,20 @@ import pathlib
 
 class ExportableScene():
     """A RAMSES Scene ready to be visualized / saved"""
-    def __init__(self, ramses, ramses_scene):
+    def __init__(self,
+                 ramses,
+                 ramses_scene,
+                 blender_scene,
+                 output_dir: str):
         self.ramses = ramses
         self.ramses_scene = ramses_scene
-        self.ramses_scene_file = pathlib.Path('/tmp/scene.ramses')  # TODO: make configurable
-        self.ramses_scene_resources_file = pathlib.Path('/tmp/scene.ramres') # TODO: make configurable
+        self.blender_scene = blender_scene
+
+        # Paths are set at a later stage
+        self.output_path = None
+        self.ramses_scene_file = None
+        self.ramses_scene_resources_file = None
+
         self.ramses_scene_as_text = None # TODO
         self.ir_groups = []
         self.groups = {}
@@ -44,3 +53,14 @@ class ExportableScene():
             for render_group in self.groups.values():
                 render_pass.addRenderGroup(render_group, group_order)
                 group_order += 1
+
+    def set_output_dir(self, output_dir: str):
+        """Sets the output directory if this scene is to be saved"""
+
+        if not pathlib.Path(output_dir).is_dir():
+            raise RuntimeError('Invalid output directory specified.')
+
+        # Path comes with a trailing slash already.
+        self.output_path = f'{output_dir}{self.blender_scene.name}'
+        self.ramses_scene_file = pathlib.Path(f'{self.output_path}.ramses')
+        self.ramses_scene_resources_file = pathlib.Path(f'{self.output_path}.ramres')
