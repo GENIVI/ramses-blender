@@ -45,7 +45,9 @@ if "bpy" in locals():
     reload_package(locals())
 
 import bpy # NOTE: the bpy import must come below the module reload code
+import pathlib
 from . import debug_utils
+from .ramses_inspector import RamsesInspector
 from .exporter import RamsesBlenderExporter
 
 
@@ -70,6 +72,9 @@ class SceneDumpOperator(bpy.types.Operator):
         exporter.build_from_extracted_representations()
 
         for exportable_scene in exporter.get_exportable_scenes():
+
+            inspector = RamsesInspector(exportable_scene, pathlib.Path()) # TODO: get path from UI
+            inspector.load_viewer()
 
             if not exportable_scene.is_valid():
                 validation_report = exportable_scene.get_validation_report()
