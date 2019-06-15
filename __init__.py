@@ -163,6 +163,16 @@ class RamsesExportOperator(bpy.types.Operator):
         row = col.row()
         row.prop(self, 'emit_debug_files')
 
+    @classmethod
+    def register(cls):
+        """Add scene properties here if needed"""
+        print('RamsesExportOperator registered.')
+
+    @classmethod
+    def unregister(cls):
+        """Remove scene properties here if needed"""
+        print('RamsesExportOperator unregistered')
+
 
 classes = (
     # Add all classes that must be registered and unregistered
@@ -180,7 +190,6 @@ def register():
 
     print("RAMSES Scene Exporter: Add-on registered.")
     log.info("RAMSES Scene Exporter: Add-on registered.")
-
 
 def unregister():
     for c in reversed(classes):
