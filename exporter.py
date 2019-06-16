@@ -316,9 +316,5 @@ class BlenderRamsesExtractor():
 
     def run(self):
         log.debug(f'Extracting data from scene {self.scene}')
-        representation = SceneRepresentation(self.scene,
-                                             self.scene.objects,
-                                             self.scene.camera,
-                                             self.scene.animation_data,
-                                             self.scene.world)
+        representation = SceneRepresentation(self.scene)
         return representation

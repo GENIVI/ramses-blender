@@ -24,20 +24,11 @@ class SceneRepresentation():
     RAMSES.
     """
 
-    def __init__(self,
-                 scene: bpy.types.Scene,
-                 objects,
-                 camera,
-                 animation_data,
-                 world):
+    def __init__(self, scene: bpy.types.Scene):
         self.scene = scene
-        self.objects = objects
-        self.camera = camera
-        self.animation_data = animation_data
-        self.world = world
 
         self.graph = SceneGraph(scene)
-        for o in self.objects:
+        for o in self.scene.objects:
             self.graph.add_node(o)
 
     def teardown(self):
