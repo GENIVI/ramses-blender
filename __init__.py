@@ -47,9 +47,9 @@ if "bpy" in locals():
 import bpy # NOTE: the bpy import must come below the module reload code
 import pathlib
 import os
-from . import debug_utils
-from .ramses_inspector import RamsesInspector
-from .exporter import RamsesBlenderExporter
+from ramses_export import debug_utils
+from ramses_export.ramses_inspector import RamsesInspector
+from ramses_export.exporter import RamsesBlenderExporter
 from bpy_extras.io_utils import ExportHelper
 from bpy.props import (
     StringProperty,
