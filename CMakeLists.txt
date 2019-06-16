@@ -8,7 +8,7 @@
 
 cmake_minimum_required(VERSION 3.10)
 
-set(project_name "ramses-export")
+set(project_name "ramses_export")
 project(${project_name})
 set(install_subdir ${project_name})
 
@@ -20,8 +20,6 @@ if(CMAKE_INSTALL_PREFIX STREQUAL "C:\\Program Files" OR CMAKE_INSTALL_PREFIX STR
     message(FATAL_ERROR "CMAKE_INSTALL_PREFIX seems to have a default path. Please set it explicitly either to a blender add-on directory, or a custom path!")
 endif()
 
-set(ramses-python_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX}/${install_subdir})
-
 # Needed in case of CMake-Cache presets from other dependencies which also require python
 unset(PYTHONINTERP_FOUND CACHE)
 unset(PYTHON_EXECUTABLE CACHE)
@@ -29,13 +27,15 @@ unset(PYTHON_EXECUTABLE CACHE)
 # with Blender!
 set(PYBIND11_PYTHON_VERSION 3.7)
 
+set(CMAKE_INSTALL_PREFIX_FROM_USER ${CMAKE_INSTALL_PREFIX})
+set(CMAKE_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX}/${install_subdir})
 add_subdirectory(external/ramses-python)
+set(CMAKE_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX_FROM_USER})
 
 # Installation
 file(GLOB python_files
     *.py
 )
 
-set(CMAKE_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX_FROM_USER})
 install(FILES ${python_files} DESTINATION ${CMAKE_INSTALL_PREFIX}/${install_subdir})
 
