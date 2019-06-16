@@ -179,8 +179,8 @@ class RamsesBlenderExporter():
             #version 300 es
 
             in vec3 a_position;
-            in vec2 a_texcoords;
-            out vec2 v_texcoords;
+            //in vec2 a_texcoords;
+            //out vec2 v_texcoords;
 
             void main()
             {
