@@ -56,7 +56,6 @@ from bpy.props import (
     BoolProperty
 )
 
-
 log = debug_utils.get_debug_logger()
 
 def addon_reload():
@@ -199,3 +198,10 @@ def unregister():
 
     log.info("RAMSES Scene Exporter: Add-on unregistered.")
     print("RAMSES Scene Exporter: Add-on unregistered.")
+
+if __name__ == "__main__":
+    # If run as a standalone package - execute the tests
+    # TODO: consider if this is the best way to execute tests
+    from ramses_export.tests import RunAllTests
+    tests = RunAllTests()
+    tests.execute()
