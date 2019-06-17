@@ -225,7 +225,7 @@ class RamsesBlenderExporter():
             ramses_mesh_node.setAppearance(appearance)
             ramses_mesh_node.setGeometry(geometry)
 
-            translation_node = scene.createNode(f'Positions mesh {str(ir_node)} into scene')
+            translation_node = scene.createNode(f'Positions mesh "{str(ir_node)}" into scene')
             translation_node.setTranslation(ir_node.location[0],
                                             ir_node.location[1],
                                             ir_node.location[2])
@@ -246,10 +246,16 @@ class RamsesBlenderExporter():
             ramses_camera_node.setViewport(0, 0, int(ir_node.width), int(ir_node.height))
             ramses_camera_node.setFrustumFromFoV(fov, aspect_ratio, z_near, z_far)
 
+            translation_node = scene.createNode(f'Positions Camera "{str(ir_node)}" into scene')
+            translation_node.setTranslation(ir_node.location[0],
+                                            ir_node.location[1],
+                                            ir_node.location[2])
+            translation_node.addChild(ramses_camera_node)
+
             if exportable_scene:
                 self._add_to_render_passes(exportable_scene, ir_node, ramses_camera_node)
 
-            returned_node = ramses_camera_node
+            returned_node = translation_node
 
         elif isinstance(ir_node, Node):
             ramses_node = scene.createNode(name)
