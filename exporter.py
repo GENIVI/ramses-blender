@@ -224,8 +224,7 @@ class RamsesBlenderExporter():
             ramses_mesh_node.setAppearance(appearance)
             ramses_mesh_node.setGeometry(geometry)
 
-            translation_node = scene.createNode(f'Positions mesh \
-                {str(ir_node)} into scene')
+            translation_node = scene.createNode(f'Positions mesh {str(ir_node)} into scene')
             translation_node.setTranslation(ir_node.location[0],
                                             ir_node.location[1],
                                             ir_node.location[2])

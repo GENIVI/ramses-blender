@@ -264,12 +264,12 @@ class SceneGraph():
             node = MeshNode(o)
 
             if len(node.get_faces()) == 0:
-                log.debug(f'Malformed mesh with no faces: {str(node)}. \
-Adding placeholder.')
+                log.debug(f'Malformed mesh with no faces: {str(node)}. '
+                          + 'Adding placeholder.')
                 old_node = node
                 node = Node(blender_object=old_node.blender_object,
-                          name=f'Placeholder node for malformed \
-mesh with no faces: {str(old_node)}')
+                            name='Placeholder node for malformed '
+                                 +f'mesh with no faces: {str(old_node)}')
                 old_node.teardown()
 
         elif o.type == 'CAMERA':
@@ -291,9 +291,9 @@ mesh with no faces: {str(old_node)}')
 
         else: # TODO: map EMPTIES to Node() ?
 
-            log.debug(f'IR SceneGraph: found node: {o.name} of type: {o.type} \
-in Blender which is currently not implemented. Adding a \
-placeholder node.')
+            log.debug( f'IR SceneGraph: found node: {o.name} of type: {o.type} '
+                      + 'in Blender which is currently not implemented. Adding '
+                      + 'a placeholder node.')
 
             node = Node(name=f'Unresolved Blender node: {str(o)} of type {o.type}')
 
@@ -602,8 +602,8 @@ class PointLightNode(LightNode):
         super().__init__(blender_object=blender_object)
 
         if blender_object.data.type != 'POINT':
-            raise RuntimeError(f'Tried to init a PointLightNode with a \
-                incompatible Blender object')
+            raise RuntimeError('Tried to init a PointLightNode with a '
+                              +'incompatible Blender object')
 
         self.constant_coefficient = blender_object.data.constant_coefficient
 
@@ -624,8 +624,8 @@ class SpotLightNode(LightNode):
         super().__init__(blender_object=blender_object)
 
         if blender_object.data.type != 'SPOT':
-            raise RuntimeError(f'Tried to init a SpotLightNode with a \
-                incompatible Blender object')
+            raise RuntimeError('Tried to init a SpotLightNode with a '
+                              +'incompatible Blender object')
 
         self.constant_coefficient = blender_object.data.constant_coefficient
 
@@ -651,8 +651,8 @@ class SunLightNode(LightNode):
         super().__init__(blender_object=blender_object)
 
         if blender_object.data.type != 'SUN':
-            raise RuntimeError(f'Tried to init a SunLightNode with a \
-                incompatible Blender object')
+            raise RuntimeError('Tried to init a SunLightNode with a '
+                              +'incompatible Blender object')
 
         self.angle=blender_object.data.angle
 
@@ -672,8 +672,8 @@ class AreaLightNode(LightNode):
         super().__init__(blender_object=blender_object)
 
         if blender_object.data.type != 'AREA':
-            raise RuntimeError(f'Tried to init a SunLightNode with a \
-                incompatible Blender object')
+            raise RuntimeError('Tried to init a SunLightNode with a '
+                              +'incompatible Blender object')
 
         self.constant_coefficient = blender_object.data.constant_coefficient
 
