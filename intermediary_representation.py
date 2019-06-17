@@ -218,8 +218,8 @@ class Node():
 class SceneGraph():
     """For every scene, a graph is created so we can translate concepts as close as possible"""
 
-    def __init__(self, scene: bpy.types.Scene, root: Node = Node(name='Root node')):
-        self.root = root
+    def __init__(self, scene: bpy.types.Scene, root: Node = None):
+        self.root = root if root else Node(name='Root node')
         self.scene = scene
 
     def add_node(self, o: bpy.types.Object = None, parent: Node = None) -> Node:

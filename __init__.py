@@ -58,10 +58,6 @@ from bpy.props import (
 
 log = debug_utils.get_debug_logger()
 
-def addon_reload():
-    bpy.ops.preferences.addon_disable(module=__name__)
-    bpy.ops.preferences.addon_enable(module=__name__)
-    reload_package(locals())
 
 def auto_find_viewer_path():
     pwd = pathlib.Path.cwd()
@@ -121,10 +117,10 @@ class RamsesExportOperator(bpy.types.Operator):
         return {'RUNNING_MODAL'}
 
     def execute(self, context):
-        addon_reload()
 
-        if self.emit_debug_files:
+        if self.emit_debug_files and not debug_utils.debug_logger_set:
             debug_utils.setup_logging(f'{self.directory}debug.txt') # Master log file
+            debug_utils.debug_logger_set = True
 
         exporter = RamsesBlenderExporter(bpy.data.scenes)
         exporter.extract_from_blender_scene()

@@ -4,6 +4,7 @@ import random
 import time
 
 logging_file_handles = {}
+debug_logger_set = False
 
 def setup_logging(fname: str):
     with open(fname, 'w') as f:
