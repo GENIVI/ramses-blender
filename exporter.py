@@ -91,10 +91,10 @@ class RamsesBlenderExporter():
         log.debug(\
             f'Intermediary representation consists of:\n{str(scene_representation.graph)}')
 
-        ramses_root = self._ramses_build_subscene(ramses_scene,
-                                                  ir_root,
-                                                  parent=None,
-                                                  exportable_scene=exportable_scene)
+        ramses_root = self._ramses_build_recursively(ramses_scene,
+                                                     ir_root,
+                                                     parent=None,
+                                                     exportable_scene=exportable_scene)
 
         log.debug(f'Successfully built RAMSES Scenegraph: {str(ramses_root)}. Tearing down the IR graph')
         scene_representation.teardown()
@@ -107,12 +107,12 @@ class RamsesBlenderExporter():
         return exportable_scene
 
 
-    def _ramses_build_subscene(self,
-                               scene: RamsesPython.Scene,
-                               ir_node: Node,
-                               exportable_scene: ExportableScene,
-                               parent: RamsesPython.Node = None,
-                               current_depth = 0) -> RamsesPython.Node:
+    def _ramses_build_recursively(self,
+                                  scene: RamsesPython.Scene,
+                                  ir_node: Node,
+                                  exportable_scene: ExportableScene,
+                                  parent: RamsesPython.Node = None,
+                                  current_depth = 0) -> RamsesPython.Node:
 
         """Builds a RAMSES scene graph starting from 'node' and
         optionally adds it as a child to 'parent'
@@ -132,7 +132,7 @@ class RamsesBlenderExporter():
         """
 
         log.debug((' ' * current_depth * 4) +
-                  f'Building subscene for node: "{str(ir_node)}", parent is "{str(parent)}"')
+                  f'Recursively building RAMSES nodes for IR node: "{str(ir_node)}", RAMSES parent is "{str(parent)}"')
 
         current_ramses_node = self.translate(scene, ir_node, exportable_scene=exportable_scene)
 
@@ -140,11 +140,11 @@ class RamsesBlenderExporter():
             current_depth += 1
 
         for child in ir_node.children:
-            self._ramses_build_subscene(scene,
-                                        child,
-                                        exportable_scene,
-                                        parent=current_ramses_node,
-                                        current_depth=current_depth)
+            self._ramses_build_recursively(scene,
+                                           child,
+                                           exportable_scene,
+                                           parent=current_ramses_node,
+                                           current_depth=current_depth)
 
         if parent:
             parent.addChild(current_ramses_node)
