@@ -19,34 +19,17 @@ class RamsesInspector():
     """Inspector for assessing the results of generated RAMSES scenes"""
 
     def __init__(self,
-                 scene: ExportableScene,
-                 viewer_path: pathlib.Path):
+                 scene: ExportableScene):
 
         self.scene = scene
-        self.viewer_path = viewer_path
 
-        if self.viewer_path and \
-            (not self.viewer_path.exists() or not self.viewer_path.is_file()):
-            raise RuntimeError('Could not find the RAMSES Scene Viewer. '
-                               + 'Leave the path blank if you do not '
-                               + 'intend to use it.')
 
     def load_viewer(self):
         """Loads the RAMSES scene viewer for visual inspection of the
         generated scene"""
 
-        if not self.viewer_path:
-            log.debug(f'Not launching viewer as chosen path was empty.')
-            return
+        resolution_x = self.scene.blender_scene.render.resolution_x
+        resolution_y = self.scene.blender_scene.render.resolution_y
 
-        program_name = self.viewer_path
-
-        arg_ramses_scene_file = str(self.scene.ramses_scene_file)
-        arg_ramses_scene_resources_file = str(self.scene.ramses_scene_resources_file)
-        viewer_arg = arg_ramses_scene_file.replace('.ramses', '')
-
-        assert arg_ramses_scene_file
-        assert arg_ramses_scene_resources_file
-
-        log.debug(f'Loading viewer: {program_name} with args: {viewer_arg}')
-        subprocess.run([program_name, '-s', viewer_arg], capture_output=True)
+        window = self.scene.ramses.openWindow(resolution_x, resolution_y, 0, 0)
+        window.showScene(self.scene.ramses_scene)

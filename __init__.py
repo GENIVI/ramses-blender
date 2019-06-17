@@ -59,23 +59,6 @@ from bpy.props import (
 log = debug_utils.get_debug_logger()
 
 
-def auto_find_viewer_path():
-    pwd = pathlib.Path.cwd()
-
-    #TODO: improve this?
-    viewer_bin = 'ramses-scene-viewer'
-    viewer_suffix = ''
-
-    if os.name == 'nt':
-        viewer_suffix = 'windows'
-    elif os.name == 'posix':
-        # Favor X11, user can change it if desired.
-        viewer_suffix = 'x11'
-
-    file_name = f'{viewer_bin}-{viewer_suffix}*'
-    matches = list(pwd.rglob(file_name))
-    return matches[0] # The first match
-
 def menu_func_export(self, context):
     """Sets up the entry in the export menu when appropriately registered
     in __init__.py"""
@@ -95,16 +78,6 @@ class RamsesExportOperator(bpy.types.Operator):
     directory: bpy.props.StringProperty(name="Current export path",
                                         description="Path where the resulting scene files will be saved",
                                         subtype='DIR_PATH')
-
-    viewer_path: bpy.props.StringProperty(#name='Path to the RAMSES Scene Viewer',
-                                          description='The RAMSES Scene Viewer aids '
-                                          + 'in finding errors in the exported scene. '
-                                          + 'The viewer for your platform should be located '
-                                          + 'inside the bin directory of the installation '
-                                          + 'directory. Leaving empty will cause the viewer '
-                                          + 'to not launch, but specifying a incorrect path '
-                                          + 'will cause an error',
-                                          default=str(auto_find_viewer_path()))
 
     emit_debug_files: bpy.props.BoolProperty(name='Emit debug files',
                                              default=True,
@@ -128,9 +101,8 @@ class RamsesExportOperator(bpy.types.Operator):
 
         for exportable_scene in exporter.get_exportable_scenes():
 
-            viewer_path = pathlib.Path(self.viewer_path) if self.viewer_path else None
             exportable_scene.set_output_dir(self.directory)
-            inspector = RamsesInspector(exportable_scene, viewer_path)
+            inspector = RamsesInspector(exportable_scene)
             inspector.load_viewer()
 
             if not exportable_scene.is_valid():
@@ -149,13 +121,6 @@ class RamsesExportOperator(bpy.types.Operator):
         col = layout.column()
         row = col.row(align=True)
 
-        row = row.split(factor=0.6)
-        left_col = row.column()
-        left_col.label(text='Absolute path to the RAMSES Scene Viewer')
-        right_col = row.column()
-        right_col.prop(self, 'viewer_path', text='')
-
-        row = col.row()
         row.prop(self, 'emit_debug_files')
 
     @classmethod
