@@ -26,8 +26,12 @@ class SceneRepresentation():
 
     def __init__(self, scene: bpy.types.Scene):
         self.scene = scene
-
         self.graph = SceneGraph(scene)
+
+    def build_ir(self):
+        """Builds the intermediary representation from the Blender
+        scene"""
+
         for o in self.scene.objects:
             self.graph.add_node(o)
 

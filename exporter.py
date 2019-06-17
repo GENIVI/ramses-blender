@@ -37,7 +37,9 @@ class RamsesBlenderExporter():
         for scene in self.scenes:
             extractor = BlenderRamsesExtractor(scene)
             representation = extractor.run()
+            representation.build_ir()
             self.scene_representations.append(representation)
+
             """ While this is not a 1:1 translation, if we've created way more
             nodes than there were objects then this might be indicative of a
             bug somewhere. Start checking after a minimum number of nodes"""
