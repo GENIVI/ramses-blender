@@ -9,6 +9,7 @@
 
 import pathlib
 
+
 class ExportableScene():
     """A RAMSES Scene ready to be visualized / saved"""
     def __init__(self,
@@ -25,7 +26,6 @@ class ExportableScene():
         self.ramses_scene_file = None
         self.ramses_scene_resources_file = None
 
-        self.ramses_scene_as_text = None # TODO
         self.ir_groups = []
         self.groups = {}
         self.passes = {}
@@ -64,3 +64,10 @@ class ExportableScene():
         self.output_path = f'{output_dir}{self.blender_scene.name}'
         self.ramses_scene_file = pathlib.Path(f'{self.output_path}.ramses')
         self.ramses_scene_resources_file = pathlib.Path(f'{self.output_path}.ramres')
+
+    def to_text(self) -> str:
+        """Returns the RAMSES text representation for the underlying
+        RAMSES scene"""
+        text_representation = self.ramses_scene.toText()
+        assert text_representation
+        return text_representation

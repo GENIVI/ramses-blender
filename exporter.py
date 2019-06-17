@@ -104,6 +104,7 @@ class RamsesBlenderExporter():
         validation_report = exportable_scene.get_validation_report()
         log.debug(f"Validation report for scene {str(exportable_scene.ramses_scene)}:\n{validation_report}")
 
+        log.debug(f"RAMSES Scene Text Representation:\n{exportable_scene.to_text()}\n")
         return exportable_scene
 
 
