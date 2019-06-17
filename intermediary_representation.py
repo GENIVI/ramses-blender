@@ -263,7 +263,7 @@ class SceneGraph():
         if o.type == 'MESH':
             node = MeshNode(o)
 
-            if len(node.get_faces()) == 0:
+            if node.malformed():
                 log.debug(f'Malformed mesh with no faces: {str(node)}. '
                           + 'Adding placeholder.')
                 old_node = node
@@ -426,6 +426,10 @@ class MeshNode(Node):
         super().teardown()
         log.debug(f'Freeing allocated BMesh object: "{self.mesh}"')
         self.mesh.free()
+
+    def malformed(self):
+        faces = self.get_faces()
+        return len(faces) == 0
 
     def init_memory_mesh(self, triangulate=True):
         bmesh_handle = bmesh.new()
