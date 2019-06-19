@@ -241,6 +241,13 @@ class RamsesBlenderExporter():
             rotationX_node = scene.createNode(f'Rotates Camera "{str(ir_node)}" in scene (X)')
             rotationY_node = scene.createNode(f'Rotates Camera "{str(ir_node)}" in scene (Y)')
             rotationZ_node = scene.createNode(f'Rotates Camera "{str(ir_node)}" in scene (Z)')
+            # For some reason, blender uses left-hand instead of right-hand rule for Euler rotations
+            # Thus, rotation values are negative
+            # TODO investigate why blender rotates like this
+            rotationX_node.setRotation(-ir_node.rotation[0] * 180 / math.pi, 0, 0)
+            rotationY_node.setRotation(0, -ir_node.rotation[1] * 180 / math.pi, 0)
+            rotationZ_node.setRotation(0, 0, -ir_node.rotation[2] * 180 / math.pi)
+
             # Use several single-axis rotations for maximum compatibility
             # Rotation order: Euler X -> Y -> Z
             rotationZ_node.addChild(rotationY_node)
@@ -261,6 +268,7 @@ class RamsesBlenderExporter():
             returned_node = translation_node
 
         elif isinstance(ir_node, Node):
+            # TODO should also translate and rotate, same as with camera
             ramses_node = scene.createNode(name)
 
             returned_node = ramses_node
