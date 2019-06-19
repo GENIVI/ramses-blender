@@ -9,6 +9,7 @@
 
 from __future__ import annotations # Needed in order for something to reference itself in 'typing'
 import bpy
+import math
 from . import RamsesPython
 from . import debug_utils
 from .exportable_scene import ExportableScene
@@ -237,7 +238,7 @@ class RamsesBlenderExporter():
             returned_node = translation_node
 
         elif isinstance(ir_node, PerspectiveCameraNode):
-            fov = ir_node.fov
+            fov = ir_node.fov * 180 / math.pi
             z_near = ir_node.z_near
             z_far = ir_node.z_far
             aspect_ratio = ir_node.aspect_ratio
