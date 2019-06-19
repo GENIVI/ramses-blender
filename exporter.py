@@ -183,34 +183,25 @@ class RamsesBlenderExporter():
             #version 300 es
 
             in vec3 a_position;
-            //in vec2 a_texcoords;
-            //out vec2 v_texcoords;
+            uniform highp mat4 u_ModelMatrix;
+            uniform highp mat4 u_ViewMatrix;
+            uniform highp mat4 u_ProjectionMatrix;
 
             void main()
             {
-                //v_texcoords = a_texcoords;
-                // z = -1.0, so that the geometry will not be clipped by the near plane of the camera
-                gl_Position = vec4(a_position.xy, -1.0, 1.0);
+                gl_Position = u_ProjectionMatrix * u_ViewMatrix * u_ModelMatrix * vec4(a_position.xyz, 1.0);
             }
             """
 
             fragShader = """
             #version 300 es
 
-            //uniform sampler2D u_texture;
             precision mediump float;
-            //uniform float u_opacity;
 
-            //in vec2 v_texcoords;
             out vec4 FragColor;
 
             void main(void)
             {
-                //ivec2 textureSize = textureSize(u_texture, 0);
-                //vec2 texelFloat = vec2(v_texcoords.x * float(textureSize.x), v_texcoords.y * float(textureSize.y));
-                //vec4 texel = texelFetch(u_texture, ivec2(texelFloat), 0);
-                //FragColor = u_opacity * texel;
-
                 FragColor = vec4(1.0, 1.0, 1.0, 1.0);
             }
 
