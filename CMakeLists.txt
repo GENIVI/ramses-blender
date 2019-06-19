@@ -10,14 +10,17 @@ cmake_minimum_required(VERSION 3.10)
 
 set(project_name "ramses_export")
 project(${project_name})
-set(install_subdir ${project_name})
+
+set(BLENDER_ADDONS_PATH "" CACHE PATH "Path to blender addons directory")
+set(BLENDER_EXECUTABLE "" CACHE FILEPATH "Path to blender executable")
+
+# TODO considering doing some more checks, e.g. that there is an executable called blender, and addon folder has some addons
+if(NOT BLENDER_ADDONS_PATH OR NOT BLENDER_EXECUTABLE)
+    message(FATAL_ERROR "Must set BLENDER_ADDONS_PATH and BLENDER_EXECUTABLE variables!")
+endif()
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
-endif()
-
-if(CMAKE_INSTALL_PREFIX STREQUAL "C:\\Program Files" OR CMAKE_INSTALL_PREFIX STREQUAL "/usr/local")
-    message(FATAL_ERROR "CMAKE_INSTALL_PREFIX seems to have a default path. Please set it explicitly either to a blender add-on directory, or a custom path!")
 endif()
 
 # Needed in case of CMake-Cache presets from other dependencies which also require python
@@ -27,15 +30,16 @@ unset(PYTHON_EXECUTABLE CACHE)
 # with Blender!
 set(PYBIND11_PYTHON_VERSION 3.7)
 
-set(CMAKE_INSTALL_PREFIX_FROM_USER ${CMAKE_INSTALL_PREFIX})
-set(CMAKE_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX}/${install_subdir})
+# Temporary workaround to prevent ramses installation
+# Fix ramses to be able to disable installation
+set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR}/install)
 add_subdirectory(external/ramses-python)
-set(CMAKE_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX_FROM_USER})
 
 # Installation
-file(GLOB python_files
+file(GLOB src_files
     *.py
 )
 
-install(FILES ${python_files} DESTINATION ${CMAKE_INSTALL_PREFIX}/${install_subdir})
+install(TARGETS RamsesPython LIBRARY DESTINATION ${BLENDER_ADDONS_PATH}/${project_name}/)
+install(FILES ${src_files} DESTINATION ${BLENDER_ADDONS_PATH}/${project_name}/)
 
