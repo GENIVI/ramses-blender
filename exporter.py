@@ -238,11 +238,22 @@ class RamsesBlenderExporter():
             ramses_camera_node.setViewport(0, 0, int(ir_node.width), int(ir_node.height))
             ramses_camera_node.setFrustumFromFoV(fov, aspect_ratio, z_near, z_far)
 
+            rotationX_node = scene.createNode(f'Rotates Camera "{str(ir_node)}" in scene (X)')
+            rotationY_node = scene.createNode(f'Rotates Camera "{str(ir_node)}" in scene (Y)')
+            rotationZ_node = scene.createNode(f'Rotates Camera "{str(ir_node)}" in scene (Z)')
+            # Use several single-axis rotations for maximum compatibility
+            # Rotation order: Euler X -> Y -> Z
+            rotationZ_node.addChild(rotationY_node)
+            rotationY_node.addChild(rotationX_node)
+            rotationX_node.addChild(ramses_camera_node)
+
             translation_node = scene.createNode(f'Positions Camera "{str(ir_node)}" into scene')
             translation_node.setTranslation(ir_node.location[0],
                                             ir_node.location[1],
                                             ir_node.location[2])
-            translation_node.addChild(ramses_camera_node)
+
+            # Translation comes last - after rotation
+            translation_node.addChild(rotationZ_node)
 
             if exportable_scene:
                 self._add_to_render_passes(exportable_scene, ir_node, ramses_camera_node)
