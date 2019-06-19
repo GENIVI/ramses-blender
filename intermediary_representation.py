@@ -82,6 +82,8 @@ class Node():
 
     def _init_from_blender_object(self, blender_object: bpy.types.Object):
         self.location = blender_object.location
+        # TODO have to also chech rotation_mode -> translate correctly
+        self.rotation = blender_object.rotation_euler
         self.matrix_basis = blender_object.matrix_basis
         self.matrix_local = blender_object.matrix_local
         self.matrix_parent_inverse = blender_object.matrix_parent_inverse
