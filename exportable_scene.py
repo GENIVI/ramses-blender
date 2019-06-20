@@ -8,6 +8,7 @@
 #  -------------------------------------------------------------------------
 
 import pathlib
+import os
 
 
 class ExportableScene():
@@ -15,16 +16,13 @@ class ExportableScene():
     def __init__(self,
                  ramses,
                  ramses_scene,
-                 blender_scene,
-                 output_dir: str):
+                 blender_scene):
         self.ramses = ramses
         self.ramses_scene = ramses_scene
         self.blender_scene = blender_scene
 
         # Paths are set at a later stage
         self.output_path = None
-        self.ramses_scene_file = None
-        self.ramses_scene_resources_file = None
 
         self.ir_groups = []
         self.groups = {}
@@ -32,8 +30,11 @@ class ExportableScene():
 
     def save(self):
         """Persists the RAMSES scene."""
-        self.ramses_scene.saveToFiles(str(self.ramses_scene_file),
-                                      str(self.ramses_scene_resources_file),
+
+        ramses_scene_file = os.path.join(self.output_path, f'{self.blender_scene.name}.ramses')
+        ramses_scene_resources_file = os.path.join(self.output_path, f'{self.blender_scene.name}.ramres')
+        self.ramses_scene.saveToFiles(str(ramses_scene_file),
+                                      str(ramses_scene_resources_file),
                                       True)
 
     def get_validation_report(self):
@@ -60,10 +61,7 @@ class ExportableScene():
         if not pathlib.Path(output_dir).is_dir():
             raise RuntimeError('Invalid output directory specified.')
 
-        # Path comes with a trailing slash already.
-        self.output_path = f'{output_dir}{self.blender_scene.name}'
-        self.ramses_scene_file = pathlib.Path(f'{self.output_path}.ramses')
-        self.ramses_scene_resources_file = pathlib.Path(f'{self.output_path}.ramres')
+        self.output_path = output_dir
 
     def to_text(self) -> str:
         """Returns the RAMSES text representation for the underlying
