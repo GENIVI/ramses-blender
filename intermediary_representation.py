@@ -199,13 +199,14 @@ class Node():
         Useful for passing values into a rendering engine.
 
         Arguments:
-            vector_list  -- A vector from Blender.
+            vector_list  -- A list of vectors from Blender.
 
 
         Returns:
             List[Float] -- The unpacked values in a Python list.
         """
-        return list(itertools.chain.from_iterable(vertex.co for vertex in vector_list))
+        a_iterable = [vertex.co if hasattr(vertex, 'co') else vertex for vertex in vector_list]
+        return list(itertools.chain.from_iterable(a_iterable))
 
     def teardown(self):
         for child in self.children:
