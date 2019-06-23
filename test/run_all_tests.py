@@ -73,8 +73,15 @@ def main():
         shutil.rmtree(test_results, ignore_errors=True)
 
     os.makedirs(test_results)
-    
+
     tests = {
+        'unit_tests' :
+            {
+                'script'        : os.path.join(current_path, 'run_unit_tests.py'),
+                'test_scene'    : os.path.join(current_path, 'test_scenes/cube.blend'),
+                'expected_image': '',
+                'expected_output_files': 0,
+            },
         'export_cube' :
             {
                 'script'        : os.path.join(current_path, 'export_cube.py'),
@@ -116,6 +123,9 @@ def main():
         p = subprocess.Popen(test_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=test_results)
         out, err = p.communicate()
 
+        if test == 'unit_tests':
+            print(f"UNIT TESTS OUTPUT: \n{err.decode('utf-8')}")
+
         test_failed = False
         if 0 != p.returncode:
             test_failed = True
@@ -130,16 +140,17 @@ def main():
             print("\n".join(output_files) if output_files else 'No files')
 
         # No other way to check if the script threw an exception
-        test_had_exceptions = ('Traceback' in err.decode('utf-8'))
+        test_had_exceptions = ('Traceback' in err.decode('utf-8') or 'Error' in err.decode('utf-8'))
         if test_had_exceptions:
             test_failed = True
             print('Test {} produced exceptions! Output from blender: {}'.format(test, err.decode('utf-8')))
 
-        screenshot_image = os.path.join(test_results, test, 'screenshot.png')
-        image_comparison = ImageComparison(screenshot_image, tests[test]['expected_image'])
-        if not image_comparison.compare_images():
-            test_failed = True
-            print(f'Test {test} produced different screenshot than expected! Check {test_results} for results')
+        if tests[test]['expected_image']:
+            screenshot_image = os.path.join(test_results, test, 'screenshot.png')
+            image_comparison = ImageComparison(screenshot_image, tests[test]['expected_image'])
+            if not image_comparison.compare_images():
+                test_failed = True
+                print(f'Test {test} produced different screenshot than expected! Check {test_results} for results')
 
         if test_failed:
             failed_tests = failed_tests + [test]
@@ -153,7 +164,7 @@ def main():
         print("\n".join(failed_tests))
     else:
         print(f'All tests ran successfully! Check output at {test_results}')
-    
+
     return len(failed_tests)
 
 if __name__ == "__main__":
