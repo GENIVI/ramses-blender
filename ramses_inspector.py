@@ -22,14 +22,28 @@ class RamsesInspector():
                  scene: ExportableScene):
 
         self.scene = scene
-
+        self._window = None
 
     def load_viewer(self):
         """Loads the RAMSES scene viewer for visual inspection of the
         generated scene"""
 
+        self.close_viewer()
+
         resolution_x = self.scene.blender_scene.render.resolution_x
         resolution_y = self.scene.blender_scene.render.resolution_y
 
-        window = self.scene.ramses.openWindow(resolution_x, resolution_y, 0, 0)
-        window.showScene(self.scene.ramses_scene)
+        self._window = self.scene.ramses.openWindow(resolution_x, resolution_y, 0, 0)
+        self._window.showScene(self.scene.ramses_scene)
+
+    def close_viewer(self):
+        if self._window:
+            self._window.close()
+            self._window = None
+
+    def get_window(self):
+        return self._window
+
+    def __del__(self):
+        """Call _window.close() before going out of scope"""
+        self.close_viewer()
