@@ -46,3 +46,20 @@ class TestVectorUnpack(unittest.TestCase):
         vectors = mathutils.Vector((1.0, 1.0, 1.0))
         with self.assertRaises(TypeError):
             unpacked = self.node.vector_unpack(vectors)
+
+
+class TestFind(unittest.TestCase):
+    def setUp(self):
+        scene = bpy.context.scene
+
+        debug_utils.clear_scene(scene)
+        bpy.ops.mesh.primitive_cube_add()
+        self.node = MeshNode(blender_object=bpy.context.active_object)
+
+    def tearDown(self):
+        pass
+
+    def test_find_from_blender_object_None_returns_EmptyList(self):
+        blender_object = None
+        found = self.node.find_from_blender_object(blender_object)
+        self.assertEqual(found, [])

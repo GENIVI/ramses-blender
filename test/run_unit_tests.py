@@ -7,9 +7,15 @@ import unittest
 import test_intermediary_representation
 
 def run():
-    suite = unittest.defaultTestLoader.\
+    suite_1 = unittest.defaultTestLoader.\
             loadTestsFromTestCase(test_intermediary_representation.TestVectorUnpack)
-    success = unittest.TextTestRunner().run(suite).wasSuccessful()
+    suite_2 = unittest.defaultTestLoader.\
+            loadTestsFromTestCase(test_intermediary_representation.TestFind)
+
+    all_tests = unittest.TestSuite([suite_1,
+                                    suite_2])
+
+    success = unittest.TextTestRunner().run(all_tests).wasSuccessful()
     if not success:
         raise Exception('Unit tests failed')
 
