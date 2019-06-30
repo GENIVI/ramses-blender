@@ -65,7 +65,9 @@ class Node():
 
         self.dimensions = mathutils.Vector((0.0, 0.0, 0.0))
         self.color = mathutils.Vector((0.0, 0.0, 0.0))
-        self.scale = mathutils.Vector((0.0, 0.0, 0.0))
+
+        # Default scale is 1, otherwise objects would not be visible by default
+        self.scale = mathutils.Vector((1.0, 1.0, 1.0))
         self.vertex_groups = []
 
         self.up_axis = 'Z'

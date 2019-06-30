@@ -10,6 +10,7 @@
 from __future__ import annotations # Needed in order for something to reference itself in 'typing'
 import bpy
 import math
+import itertools
 from . import RamsesPython
 from . import debug_utils
 from .exportable_scene import ExportableScene
@@ -169,6 +170,10 @@ class RamsesBlenderExporter():
         name = ir_node.name
         returned_node = None
 
+        # Translate the transforms i.e. scaling, rotation and translation to RAMSES.
+        transformation_nodes = self._resolve_transforms_for_node(scene, ir_node)
+
+        last_transformation = transformation_nodes[-1]
 
         if isinstance(ir_node, MeshNode):
             ramses_mesh_node = scene.createMesh(name)
@@ -277,8 +282,8 @@ class RamsesBlenderExporter():
 
         log.debug(f'Translated IRNode "{str(ir_node)}" into "{returned_node}"')
         # TODO: get RAMSES node name from bindings
-
-        return returned_node
+        last_transformation.addChild(returned_node)
+        return last_transformation
 
     def _build_ramses_render_groups(self,
                                     ramses_scene: RamsesPython.Scene,
@@ -324,6 +329,36 @@ class RamsesBlenderExporter():
         for ir_group in exportable_scene.ir_groups:
             if ir_group.contains(ir_camera_node):
                 exportable_scene.passes[ir_camera_node.name].setCamera(ramses_camera_node)
+
+    def _resolve_transforms_for_node(self,
+                                     ramses_scene: RamsesPython.Scene,
+                                     ir_node: RamsesPython.Node) -> List[RamsesPython.Node]:
+        """
+        Resolves the transforms needed to properly set this node in the
+        scene. The order of the linear transformations applied are:
+        Scale, Rotations, Translation.
+
+        Arguments:
+            ramses_scene {RamsesPython.Scene} -- The scene to create
+            nodes from.
+            ir_node {RamsesPython.Node} -- The node to resolve
+            rotation from.
+
+        Returns:
+            List[RamsesPython.Node] -- A list with the RAMSES nodes in the
+            order they were added.
+        """
+
+        assert isinstance(ir_node.scale, mathutils.Vector)
+        scale_node = ramses_scene.createNode(f'Scales {str(ir_node)} by {str(ir_node.scale)}')
+        scale_node.setScaling(ir_node.scale[0], ir_node.scale[1], ir_node.scale[2])
+
+        # Flatten the output before returning.
+        ret = list(itertools.chain.from_iterable([
+                                                  [scale_node]
+                                                 ]))
+
+        return ret
 
 
 class BlenderRamsesExtractor():

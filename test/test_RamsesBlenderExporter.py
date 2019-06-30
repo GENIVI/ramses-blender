@@ -14,6 +14,8 @@ import bpy
 import ramses_export.debug_utils
 import ramses_export.exporter
 import ramses_export.ramses_inspector
+import ramses_export.RamsesPython
+
 
 class TestRamsesBlenderExporter(unittest.TestCase):
     def setUp(self):
@@ -45,3 +47,159 @@ class TestRamsesBlenderExporter(unittest.TestCase):
             if not exportable_scene.is_valid():
                 validation_report = exportable_scene.get_validation_report()
                 raise RuntimeError(validation_report)
+
+    def test_scaling_x_by_2(self):
+        bpy.ops.wm.open_mainfile(filepath='../test_scenes/cube_scaledX_2.blend')
+
+        exporter = ramses_export.exporter.RamsesBlenderExporter(bpy.data.scenes)
+        exporter.extract_from_blender_scene()
+        exporter.build_from_extracted_representations()
+
+        for exportable_scene in exporter.get_exportable_scenes():
+            if not exportable_scene.is_valid():
+                validation_report = exportable_scene.get_validation_report()
+                raise RuntimeError(validation_report)
+
+            expected_final_transform = []
+            # This was obtained by running Blender with the file above, exporting,
+            # visually inspecting the output for success and then querying the
+            # resulting matrix with a debugger.
+            row1 = [2.0, 0.0, 0.0, 0.0]
+            row2 = [0.0, 1.0, 0.0, 0.0]
+            row3 = [0.0, 0.0, 1.0, 0.0]
+            row4 = [0.0, 0.0, 0.0, 1.0]
+
+            expected_final_transform.extend(row1)
+            expected_final_transform.extend(row2)
+            expected_final_transform.extend(row3)
+            expected_final_transform.extend(row4)
+
+            cube = exportable_scene.ramses_scene.findObjectByName('Cube')
+            cube_node = ramses_export.RamsesPython.toNode(cube)
+
+            actual_transform = cube_node.getModelMatrix()
+
+            assert len(expected_final_transform) == 16
+            assert len(actual_transform) == 16
+
+            index = 0
+            for expected, actual in zip(expected_final_transform, actual_transform):
+                self.assertAlmostEqual(expected, actual, places=3, msg=f'on index {index}')
+                index += 1
+
+    def test_scaling_y_by_2(self):
+        bpy.ops.wm.open_mainfile(filepath='../test_scenes/cube_scaledY_2.blend')
+
+        exporter = ramses_export.exporter.RamsesBlenderExporter(bpy.data.scenes)
+        exporter.extract_from_blender_scene()
+        exporter.build_from_extracted_representations()
+
+        for exportable_scene in exporter.get_exportable_scenes():
+            if not exportable_scene.is_valid():
+                validation_report = exportable_scene.get_validation_report()
+                raise RuntimeError(validation_report)
+
+            expected_final_transform = []
+            # This was obtained by running Blender with the file above, exporting,
+            # visually inspecting the output for success and then querying the
+            # resulting matrix with a debugger.
+            row1 = [1.0, 0.0, 0.0, 0.0]
+            row2 = [0.0, 2.0, 0.0, 0.0]
+            row3 = [0.0, 0.0, 1.0, 0.0]
+            row4 = [0.0, 0.0, 0.0, 1.0]
+
+            expected_final_transform.extend(row1)
+            expected_final_transform.extend(row2)
+            expected_final_transform.extend(row3)
+            expected_final_transform.extend(row4)
+
+            cube = exportable_scene.ramses_scene.findObjectByName('Cube')
+            cube_node = ramses_export.RamsesPython.toNode(cube)
+
+            actual_transform = cube_node.getModelMatrix()
+
+            assert len(expected_final_transform) == 16
+            assert len(actual_transform) == 16
+
+            index = 0
+            for expected, actual in zip(expected_final_transform, actual_transform):
+                self.assertAlmostEqual(expected, actual, places=3, msg=f'on index {index}')
+                index += 1
+
+    def test_scaling_z_by_2(self):
+        bpy.ops.wm.open_mainfile(filepath='../test_scenes/cube_scaledZ_2.blend')
+
+        exporter = ramses_export.exporter.RamsesBlenderExporter(bpy.data.scenes)
+        exporter.extract_from_blender_scene()
+        exporter.build_from_extracted_representations()
+
+        for exportable_scene in exporter.get_exportable_scenes():
+            if not exportable_scene.is_valid():
+                validation_report = exportable_scene.get_validation_report()
+                raise RuntimeError(validation_report)
+
+            expected_final_transform = []
+            # This was obtained by running Blender with the file above, exporting,
+            # visually inspecting the output for success and then querying the
+            # resulting matrix with a debugger.
+            row1 = [1.0, 0.0, 0.0, 0.0]
+            row2 = [0.0, 1.0, 0.0, 0.0]
+            row3 = [0.0, 0.0, 2.0, 0.0]
+            row4 = [0.0, 0.0, 0.0, 1.0]
+
+            expected_final_transform.extend(row1)
+            expected_final_transform.extend(row2)
+            expected_final_transform.extend(row3)
+            expected_final_transform.extend(row4)
+
+            cube = exportable_scene.ramses_scene.findObjectByName('Cube')
+            cube_node = ramses_export.RamsesPython.toNode(cube)
+
+            actual_transform = cube_node.getModelMatrix()
+
+            assert len(expected_final_transform) == 16
+            assert len(actual_transform) == 16
+
+            index = 0
+            for expected, actual in zip(expected_final_transform, actual_transform):
+                self.assertAlmostEqual(expected, actual, places=3, msg=f'on index {index}')
+                index += 1
+
+    def test_scaling_xyz_by_2(self):
+        bpy.ops.wm.open_mainfile(filepath='../test_scenes/cube_scaledXYZ_2.blend')
+
+        exporter = ramses_export.exporter.RamsesBlenderExporter(bpy.data.scenes)
+        exporter.extract_from_blender_scene()
+        exporter.build_from_extracted_representations()
+
+        for exportable_scene in exporter.get_exportable_scenes():
+            if not exportable_scene.is_valid():
+                validation_report = exportable_scene.get_validation_report()
+                raise RuntimeError(validation_report)
+
+            expected_final_transform = []
+            # This was obtained by running Blender with the file above, exporting,
+            # visually inspecting the output for success and then querying the
+            # resulting matrix with a debugger.
+            row1 = [2.0, 0.0, 0.0, 0.0]
+            row2 = [0.0, 2.0, 0.0, 0.0]
+            row3 = [0.0, 0.0, 2.0, 0.0]
+            row4 = [0.0, 0.0, 0.0, 1.0]
+
+            expected_final_transform.extend(row1)
+            expected_final_transform.extend(row2)
+            expected_final_transform.extend(row3)
+            expected_final_transform.extend(row4)
+
+            cube = exportable_scene.ramses_scene.findObjectByName('Cube')
+            cube_node = ramses_export.RamsesPython.toNode(cube)
+
+            actual_transform = cube_node.getModelMatrix()
+
+            assert len(expected_final_transform) == 16
+            assert len(actual_transform) == 16
+
+            index = 0
+            for expected, actual in zip(expected_final_transform, actual_transform):
+                self.assertAlmostEqual(expected, actual, places=3, msg=f'on index {index}')
+                index += 1
