@@ -91,6 +91,34 @@ def main():
                 # TODO check if a more sophisticated check is needed
                 'expected_output_files': 6,
             },
+        'export_cube_scaledX' :
+            {
+                'script'        : os.path.join(current_path, 'export_cube_scaledX.py'),
+                'test_scene'    : os.path.join(current_path, 'test_scenes/cube_scaledX_2.blend'),
+                'expected_image': '',
+                'expected_output_files': 1,
+            },
+        'export_cube_scaledY' :
+            {
+                'script'        : os.path.join(current_path, 'export_cube_scaledY.py'),
+                'test_scene'    : os.path.join(current_path, 'test_scenes/cube_scaledY_2.blend'),
+                'expected_image': '',
+                'expected_output_files': 1,
+            },
+        'export_cube_scaledZ' :
+            {
+                'script'        : os.path.join(current_path, 'export_cube_scaledZ.py'),
+                'test_scene'    : os.path.join(current_path, 'test_scenes/cube_scaledZ_2.blend'),
+                'expected_image': '',
+                'expected_output_files': 1,
+            },
+        'export_cube_scaledXYZ' :
+            {
+                'script'        : os.path.join(current_path, 'export_cube_scaledXYZ.py'),
+                'test_scene'    : os.path.join(current_path, 'test_scenes/cube_scaledXYZ_2.blend'),
+                'expected_image': '',
+                'expected_output_files': 1,
+            },
         'export_moved_cube' :
             {
                 'script'        : os.path.join(current_path, 'export_cube.py'),

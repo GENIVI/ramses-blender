@@ -6,35 +6,16 @@
 #  file, You can obtain one at https://mozilla.org/MPL/2.0/.
 #  -------------------------------------------------------------------------
 
-import sys
 import os
 import bpy
-import argparse
+
+from ramses_export.test.exporter_test_base import ExporterTestBase
 
 from ramses_export import debug_utils
 from ramses_export.ramses_inspector import RamsesInspector
 from ramses_export.exporter import RamsesBlenderExporter
 from ramses_export import RamsesPython
 
-class AdaptedArgParser(argparse.ArgumentParser):
-    """ adapted argparser that prints help on error    """
-
-    def error(self, message):
-        print('error: %s\n' % message)
-        self.print_help()
-        sys.exit(1)
-
-class ExporterTestBase:
-
-    def __init__(self):
-        parser = AdaptedArgParser()
-        parser.add_argument("-w", "--working-dir", required=True, default=None, help='Working directory for this test')
-        index_of_double_dash = sys.argv.index('--')
-        args_for_test_only = sys.argv[index_of_double_dash + 1:] if index_of_double_dash != -1 else []
-        args = parser.parse_args(args_for_test_only)
-        self.working_dir = args.working_dir
-
-        debug_utils.setup_logging(os.path.join(self.working_dir, 'debug.txt'))
 
 class ExportCubeTest(ExporterTestBase):
     def execute(self):
