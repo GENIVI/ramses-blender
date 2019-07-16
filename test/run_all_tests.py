@@ -127,6 +127,77 @@ def main():
                 'expected_image': '',
                 'expected_output_files': 1,
             },
+        'export_moved_cube' :
+            {
+                'script'        : os.path.join(current_path, 'export_cube.py'),
+                'test_scene'    : os.path.join(current_path, 'test_scenes/cube_moved.blend'),
+                'expected_image': os.path.join(current_path, 'expected_results/cube_moved.png'),
+                'expected_output_files': 6,
+            },
+        'export_rotatedX30_cube' :
+            {
+                'script'        : os.path.join(current_path, 'export_cube_rotated_X30.py'),
+                'test_scene'    : os.path.join(current_path, 'test_scenes/cube_rotatedX30.blend'),
+                'expected_image': '',
+                'expected_output_files': 1,
+            },
+        'export_rotatedX30_cube' :
+            {
+                'script'        : os.path.join(current_path, 'export_cube_rotated_X30.py'),
+                'test_scene'    : os.path.join(current_path, 'test_scenes/cube_rotatedX30.blend'),
+                'expected_image': '',
+                'expected_output_files': 1,
+            },
+        'export_rotatedY45_cube' :
+            {
+                'script'        : os.path.join(current_path, 'export_cube_rotated_Y45.py'),
+                'test_scene'    : os.path.join(current_path, 'test_scenes/cube_rotatedY45.blend'),
+                'expected_image': '',
+                'expected_output_files': 1,
+            },
+        'export_rotatedZ60_cube' :
+            {
+                'script'        : os.path.join(current_path, 'export_cube_rotated_Z60.py'),
+                'test_scene'    : os.path.join(current_path, 'test_scenes/cube_rotatedZ60.blend'),
+                'expected_image': '',
+                'expected_output_files': 1,
+            },
+        'export_rotatedX30Y45Z60_cube' :
+            {
+                'script'        : os.path.join(current_path, 'export_cube_rotated_X30Y45Z60.py'),
+                'test_scene'    : os.path.join(current_path, 'test_scenes/cube_rotated_X30Y45Z60.blend'),
+                'expected_image': '',
+                'expected_output_files': 1,
+            },
+        'export_rotatedXYZ_cube' :
+            {
+                'script'        : os.path.join(current_path, 'export_cube_rotated_XYZ.py'),
+                'test_scene'    : os.path.join(current_path, 'test_scenes/cube_rotated_XYZ.blend'),
+                'expected_image': '',
+                'expected_output_files': 1,
+            },
+        'export_rotatedXZY_cube' :
+            {
+                'script'        : os.path.join(current_path, 'export_cube_rotated_XZY.py'),
+                'test_scene'    : os.path.join(current_path, 'test_scenes/cube_rotated_XZY.blend'),
+                'expected_image': '',
+                'expected_output_files': 1,
+            },
+        'export_rotatedYZX_cube' :
+            {
+                'script'        : os.path.join(current_path, 'export_cube_rotated_YZX.py'),
+                'test_scene'    : os.path.join(current_path, 'test_scenes/cube_rotated_YZX.blend'),
+                'expected_image': '',
+                'expected_output_files': 1,
+            },
+        'export_translated1X2Y3Z_cube' :
+            {
+                'script'        : os.path.join(current_path, 'export_cube_translated_1X2Y3Z.py'),
+                'test_scene'    : os.path.join(current_path, 'test_scenes/cube_translated1X2Y3Z.blend'),
+                'expected_image': '',
+                'expected_output_files': 1,
+            },
+
     }
 
     if args.run_single_test:

@@ -47,6 +47,8 @@ class Node():
         self.blender_object = blender_object
         self.name = name
         self.location = mathutils.Vector((0.0, 0.0, 0.0))
+        self.rotation = mathutils.Euler()
+        self.rotation_order = ''
 
         # See https://docs.blender.org/api/master/bpy.types.Object.html
         # Matrix access to location, rotation and scale (including deltas),
@@ -86,6 +88,7 @@ class Node():
         self.location = blender_object.location
         # TODO have to also chech rotation_mode -> translate correctly
         self.rotation = blender_object.rotation_euler
+        self.rotation_order = blender_object.rotation_mode
         self.matrix_basis = blender_object.matrix_basis
         self.matrix_local = blender_object.matrix_local
         self.matrix_parent_inverse = blender_object.matrix_parent_inverse
@@ -114,6 +117,10 @@ class Node():
         """Whether this node can be represented by a single point,
         such as a point light or a camera"""
         return self.dimensions.length == 0
+
+    def is_root(self):
+        """Whether this node is the root of the graph"""
+        return self.parent is None
 
     def contains(self, node: Node) -> bool:
         """Whether this node or its children contains the argument"""

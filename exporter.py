@@ -134,9 +134,12 @@ class RamsesBlenderExporter():
         """
 
         log.debug((' ' * current_depth * 4) +
-                  f'Recursively building RAMSES nodes for IR node: "{str(ir_node)}", RAMSES parent is "{str(parent)}"')
+                  f'Recursively building RAMSES nodes for IR node: "{str(ir_node)}", '
+                 +f'RAMSES parent is "{parent.getName() if parent else None}"')
 
-        current_ramses_node = self.translate(scene, ir_node, exportable_scene=exportable_scene)
+        translation_result = self.translate(scene, ir_node, exportable_scene=exportable_scene)
+        first_translated_node = translation_result[0]
+        last_translated_node = translation_result[-1]
 
         if ir_node.children:
             current_depth += 1
@@ -145,13 +148,13 @@ class RamsesBlenderExporter():
             self._ramses_build_recursively(scene,
                                            child,
                                            exportable_scene,
-                                           parent=current_ramses_node,
+                                           parent=last_translated_node,
                                            current_depth=current_depth)
 
         if parent:
-            parent.addChild(current_ramses_node)
+            parent.addChild(first_translated_node)
 
-        return current_ramses_node
+        return first_translated_node
 
 
     def translate(self, scene: RamsesPython.Scene, ir_node: Node, exportable_scene: ExportableScene = None) -> RamsesPython.Node:
@@ -164,16 +167,19 @@ class RamsesBlenderExporter():
             exportable_scene {ExportableScene} -- optional: sets up RenderGroups and RenderPasses.
 
         Returns:
-            RamsesPython.Node -- The translated node / graph
+            List[RamsesPython.Node] -- A list of all translated nodes
         """
 
         name = ir_node.name
-        returned_node = None
+        ret = []
 
         # Translate the transforms i.e. scaling, rotation and translation to RAMSES.
         transformation_nodes = self._resolve_transforms_for_node(scene, ir_node)
+        ret.extend(transformation_nodes)
 
-        last_transformation = transformation_nodes[-1]
+        last_transformation = transformation_nodes[-1] if transformation_nodes else None
+
+        ramses_node = None
 
         if isinstance(ir_node, MeshNode):
             ramses_mesh_node = scene.createMesh(name)
@@ -221,16 +227,11 @@ class RamsesBlenderExporter():
             ramses_mesh_node.setAppearance(appearance)
             ramses_mesh_node.setGeometry(geometry)
 
-            translation_node = scene.createNode(f'Positions mesh "{str(ir_node)}" into scene')
-            translation_node.setTranslation(ir_node.location[0],
-                                            ir_node.location[1],
-                                            ir_node.location[2])
-            translation_node.addChild(ramses_mesh_node)
-
             if exportable_scene:
                 self._add_to_render_groups(exportable_scene, ir_node, ramses_mesh_node)
 
-            returned_node = translation_node
+            ret.append(ramses_mesh_node)
+            ramses_node = ramses_mesh_node
 
         elif isinstance(ir_node, PerspectiveCameraNode):
             fov = ir_node.fov * 180 / math.pi
@@ -242,48 +243,29 @@ class RamsesBlenderExporter():
             ramses_camera_node.setViewport(0, 0, int(ir_node.width), int(ir_node.height))
             ramses_camera_node.setFrustumFromFoV(fov, aspect_ratio, z_near, z_far)
 
-            rotationX_node = scene.createNode(f'Rotates Camera "{str(ir_node)}" in scene (X)')
-            rotationY_node = scene.createNode(f'Rotates Camera "{str(ir_node)}" in scene (Y)')
-            rotationZ_node = scene.createNode(f'Rotates Camera "{str(ir_node)}" in scene (Z)')
-            # For some reason, blender uses left-hand instead of right-hand rule for Euler rotations
-            # Thus, rotation values are negative
-            # TODO investigate why blender rotates like this
-            rotationX_node.setRotation(-ir_node.rotation[0] * 180 / math.pi, 0, 0)
-            rotationY_node.setRotation(0, -ir_node.rotation[1] * 180 / math.pi, 0)
-            rotationZ_node.setRotation(0, 0, -ir_node.rotation[2] * 180 / math.pi)
-
-            # Use several single-axis rotations for maximum compatibility
-            # Rotation order: Euler X -> Y -> Z
-            rotationZ_node.addChild(rotationY_node)
-            rotationY_node.addChild(rotationX_node)
-            rotationX_node.addChild(ramses_camera_node)
-
-            translation_node = scene.createNode(f'Positions Camera "{str(ir_node)}" into scene')
-            translation_node.setTranslation(ir_node.location[0],
-                                            ir_node.location[1],
-                                            ir_node.location[2])
-
-            # Translation comes last - after rotation
-            translation_node.addChild(rotationZ_node)
-
             if exportable_scene:
                 self._add_to_render_passes(exportable_scene, ir_node, ramses_camera_node)
 
-            returned_node = translation_node
+            ret.append(ramses_camera_node)
+            ramses_node = ramses_camera_node
 
         elif isinstance(ir_node, Node):
             # TODO should also translate and rotate, same as with camera
-            ramses_node = scene.createNode(name)
-
-            returned_node = ramses_node
+            node = scene.createNode(name)
+            ret.append(node)
+            ramses_node = node
 
         else:
             raise NotImplementedError(f"Cannot translate node: {str(ir_node)} !")
 
-        log.debug(f'Translated IRNode "{str(ir_node)}" into "{returned_node}"')
-        # TODO: get RAMSES node name from bindings
-        last_transformation.addChild(returned_node)
-        return last_transformation
+        # Final hierarchy is: first_transform -> .. -> last_transform -> ramses_node -> ..
+        if last_transformation:
+            last_transformation.addChild(ramses_node)
+
+        log.debug(f'Translated IRNode "{str(ir_node)}" into "{ramses_node.getName()}"')
+
+        return ret
+
 
     def _build_ramses_render_groups(self,
                                     ramses_scene: RamsesPython.Scene,
@@ -330,6 +312,71 @@ class RamsesBlenderExporter():
             if ir_group.contains(ir_camera_node):
                 exportable_scene.passes[ir_camera_node.name].setCamera(ramses_camera_node)
 
+    def _resolve_rotation_order(self,
+                                ramses_scene: RamsesPython.Scene,
+                                ir_node: RamsesPython.Node) -> List[RamsesPython.Node]:
+        """Resolves the order of RAMSES rotation nodes based on Blender's
+        rotation order.
+
+        Rotations are not commutative, that is, the end result depend
+        on the order in which individual rotations happen. Use this
+        method to properly order the RAMSES node to achieve the same
+        rotation order used in Blender.
+
+        Arguments:
+            ramses_scene {RamsesPython.Scene} -- The scene to create
+            nodes from.
+            ir_node {RamsesPython.Node} -- The node to resolve
+            rotation from.
+
+        Returns:
+            List[RamsesPython.Node] -- A list with the RAMSES nodes in the
+            order they were added.
+        """
+
+        rotation = ir_node.rotation
+        rotation_order = ir_node.rotation.order
+
+        assert len(rotation) == 3 # A value for each axis
+        assert len(rotation_order) == 3 # Three axis of rotation
+
+        assert rotation_order[0] in ('X', 'Y', 'Z')
+        assert rotation_order[1] in ('X', 'Y', 'Z')
+        assert rotation_order[2] in ('X', 'Y', 'Z')
+
+        ret = []
+
+        for i in range(3):
+            # Use several single-axis rotations for maximum compatibility
+            rotation_degrees = -rotation[i] * 180 / math.pi
+            rotation_node = ramses_scene.createNode(\
+                f'Rotates node "{str(ir_node)}" in axis: ({str(rotation_order[i])}) by {rotation_degrees}')
+
+            # For some reason, blender uses left-hand instead of right-hand rule for Euler rotations
+            # Thus, rotation values are negative
+            # TODO investigate why blender rotates like this
+
+            if rotation_order[i] == 'X':
+                rotation_node.setRotation(rotation_degrees, 0, 0)
+            elif rotation_order[i] == 'Y':
+                rotation_node.setRotation(0, rotation_degrees, 0)
+            elif rotation_order[i] == 'Z':
+                rotation_node.setRotation(0, 0, rotation_degrees)
+
+            ret.append(rotation_node)
+
+        ret.reverse() # e.g. XYZ is (Z -> Y -> X -> Node)
+
+        for count, node in enumerate(ret):
+            try:
+                # Set up parenting in order nodes were added.
+                next_node = ret[count + 1]
+                node.addChild(next_node)
+            except IndexError:
+                break
+
+        return ret
+
     def _resolve_transforms_for_node(self,
                                      ramses_scene: RamsesPython.Scene,
                                      ir_node: RamsesPython.Node) -> List[RamsesPython.Node]:
@@ -349,13 +396,33 @@ class RamsesBlenderExporter():
             order they were added.
         """
 
+        if ir_node.is_root():
+            # Do not append any transforms to the root node itself.
+            return []
+
         assert isinstance(ir_node.scale, mathutils.Vector)
         scale_node = ramses_scene.createNode(f'Scales {str(ir_node)} by {str(ir_node.scale)}')
         scale_node.setScaling(ir_node.scale[0], ir_node.scale[1], ir_node.scale[2])
 
+        rotation_nodes = self._resolve_rotation_order(ramses_scene, ir_node)
+
+        translation_node = ramses_scene.createNode(f'Translates "{str(ir_node)}" by {str(ir_node.location)}')
+        translation_node.setTranslation(ir_node.location[0],
+                                        ir_node.location[1],
+                                        ir_node.location[2])
+
+        # Set up parenting: scaling -> first_rotation ... last_rotation -> translation
+        first_rotation = rotation_nodes[0]
+        last_rotation = rotation_nodes[-1]
+
+        translation_node.addChild(first_rotation)
+        last_rotation.addChild(scale_node)
+
         # Flatten the output before returning.
         ret = list(itertools.chain.from_iterable([
-                                                  [scale_node]
+                                                  [translation_node],
+                                                  rotation_nodes,
+                                                  [scale_node],
                                                  ]))
 
         return ret
