@@ -30,9 +30,8 @@ unset(PYTHON_EXECUTABLE CACHE)
 # with Blender!
 set(PYBIND11_PYTHON_VERSION 3.7)
 
-# Temporary workaround to prevent ramses installation
-# Fix ramses to be able to disable installation
-set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR}/install)
+# TODO find a better way to control installation prefix for sub-projects
+set(CMAKE_INSTALL_PREFIX ${BLENDER_ADDONS_PATH}/${project_name})
 add_subdirectory(external/ramses-python)
 
 # Installation
@@ -40,6 +39,5 @@ file(GLOB src_files
     *.py
 )
 
-install(TARGETS RamsesPython LIBRARY DESTINATION ${BLENDER_ADDONS_PATH}/${project_name}/)
 install(FILES ${src_files} DESTINATION ${BLENDER_ADDONS_PATH}/${project_name}/)
 
