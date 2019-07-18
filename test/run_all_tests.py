@@ -120,20 +120,6 @@ def main():
                 'expected_image': '',
                 'expected_output_files': 1,
             },
-        'export_moved_cube' :
-            {
-                'script'        : os.path.join(current_path, 'export_cube.py'),
-                'test_scene'    : os.path.join(current_path, 'test_scenes/cube_moved.blend'),
-                'expected_image': os.path.join(current_path, 'expected_results/cube_moved.png'),
-                'expected_output_files': 6,
-            },
-        'export_rotatedX_cube' :
-            {
-                'script'        : os.path.join(current_path, 'export_cube.py'),
-                'test_scene'    : os.path.join(current_path, 'test_scenes/cube_rotatedX.blend'),
-                'expected_image': os.path.join(current_path, 'expected_results/cube_rotatedX.png'),
-                'expected_output_files': 6,
-            }
     }
 
     if args.run_single_test:
