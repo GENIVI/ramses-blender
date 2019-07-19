@@ -1,5 +1,8 @@
 build/*
 __pycache__/*
+test/__pycache__/*
+test/test_results/*
+debug.txt
 
 # Prerequisites
 *.d
