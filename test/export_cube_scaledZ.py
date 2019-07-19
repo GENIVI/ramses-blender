@@ -70,7 +70,7 @@ class TestExportCubeScaledZ(ExporterTestBase, unittest.TestCase):
 
 if __name__ == '__main__':
     suite_1 = unittest.defaultTestLoader.\
-            loadTestsFromTestCase(TestExportCubeScaledX)
+            loadTestsFromTestCase(TestExportCubeScaledZ)
 
     all_tests = unittest.TestSuite([suite_1])
 
