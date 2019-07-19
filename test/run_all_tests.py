@@ -61,6 +61,7 @@ def main():
     parser = AdaptedArgParser()
     parser.add_argument("-b", "--blender-binary", required=True, default=None, help='Path blender executable')
     parser.add_argument("-r", "--test-results-path", default=None, help='Path to store test results')
+    parser.add_argument("-s", "--run-single-test", default=None, help='Run specific test')
 
     args = parser.parse_args()
     if not os.path.exists(args.blender_binary):
@@ -134,6 +135,13 @@ def main():
                 'expected_output_files': 6,
             }
     }
+
+    if args.run_single_test:
+        tests = {args.run_single_test: tests[args.run_single_test]}
+
+    print('Found tests:')
+    for test_name in tests:
+        print(test_name)
 
     failed_tests = []
     for test in tests:
