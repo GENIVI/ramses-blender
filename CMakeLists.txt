@@ -38,5 +38,10 @@ file(GLOB src_files
     *.py
 )
 
+file(GLOB test_files
+    test/*.py
+)
+
 install(FILES ${src_files} DESTINATION ${BLENDER_ADDONS_PATH}/${project_name}/)
+install(FILES ${test_files} DESTINATION ${BLENDER_ADDONS_PATH}/${project_name}/test)
 
