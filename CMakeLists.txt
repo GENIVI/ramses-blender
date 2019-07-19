@@ -12,11 +12,10 @@ set(project_name "ramses_export")
 project(${project_name})
 
 set(BLENDER_ADDONS_PATH "" CACHE PATH "Path to blender addons directory")
-set(BLENDER_EXECUTABLE "" CACHE FILEPATH "Path to blender executable")
 
-# TODO considering doing some more checks, e.g. that there is an executable called blender, and addon folder has some addons
-if(NOT BLENDER_ADDONS_PATH OR NOT BLENDER_EXECUTABLE)
-    message(FATAL_ERROR "Must set BLENDER_ADDONS_PATH and BLENDER_EXECUTABLE variables!")
+# TODO consider doing some more checks, e.g. addon folder has some addons
+if(NOT BLENDER_ADDONS_PATH)
+    message(FATAL_ERROR "Must set BLENDER_ADDONS_PATH variable!")
 endif()
 
 if(NOT CMAKE_BUILD_TYPE)
