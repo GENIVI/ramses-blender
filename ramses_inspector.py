@@ -9,6 +9,7 @@
 
 import subprocess
 import pathlib
+import subprocess
 from .exportable_scene import ExportableScene
 from . import debug_utils
 
@@ -22,28 +23,30 @@ class RamsesInspector():
                  scene: ExportableScene):
 
         self.scene = scene
-        self._window = None
+        self.viewer_process = None
 
-    def load_viewer(self):
+    def load_viewer(self, platform, block: bool = False):
         """Loads the RAMSES scene viewer for visual inspection of the
         generated scene"""
+
+        assert isinstance(platform, str)
+        platform = platform.lower()
 
         self.close_viewer()
 
         resolution_x = self.scene.blender_scene.render.resolution_x
         resolution_y = self.scene.blender_scene.render.resolution_y
 
-        self._window = self.scene.ramses.openWindow(resolution_x, resolution_y, 0, 0)
-        self._window.showScene(self.scene.ramses_scene)
+        program_args = f'-s {self.scene.output_path}{self.scene.blender_scene.name} -x -w {resolution_x} -h {resolution_y}'
+        program = f'ramses-scene-viewer-{platform}'
+        cmd = f'bin/{program} {program_args}'
+
+        log.debug(f'Running viewer. Command is: {cmd}\n')
+
+        self.viewer_process = subprocess.Popen(cmd, shell=True)
+        if block:
+            self.viewer_process.wait()
 
     def close_viewer(self):
-        if self._window:
-            self._window.close()
-            self._window = None
-
-    def get_window(self):
-        return self._window
-
-    def __del__(self):
-        """Call _window.close() before going out of scope"""
-        self.close_viewer()
+        if self.viewer_process:
+            self.viewer_process.kill()

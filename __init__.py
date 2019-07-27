@@ -85,6 +85,12 @@ class RamsesExportOperator(bpy.types.Operator):
                                              + 'the carried out operations. If chosen, will '
                                              + 'write a debug.txt file')
 
+    platform: bpy.props.EnumProperty(name='Platform',
+                                     items=[('X11-EGL-ES-3-0', 'X11-EGL-ES-3-0', 'X11-EGL-ES-3-0'), # (identifier, name, description)
+                                            ('WAYLAND-IVI-EGL-ES-3-0', 'WAYLAND-IVI-EGL-ES-3-0', 'WAYLAND-IVI-EGL-ES-3-0'),
+                                            ('WAYLAND-SHELL-EGL-ES-3-0', 'WAYLAND-SHELL-EGL-ES-3-0', 'WAYLAND-SHELL-EGL-ES-3-0')],
+                                     description='Platform to use for previews')
+
     def invoke(self, context, event):
         context.window_manager.fileselect_add(self)
         return {'RUNNING_MODAL'}
@@ -103,7 +109,7 @@ class RamsesExportOperator(bpy.types.Operator):
 
             exportable_scene.set_output_dir(self.directory)
             inspector = RamsesInspector(exportable_scene)
-            inspector.load_viewer()
+            inspector.load_viewer(self.platform)
 
             if not exportable_scene.is_valid():
                 validation_report = exportable_scene.get_validation_report()
@@ -120,8 +126,9 @@ class RamsesExportOperator(bpy.types.Operator):
         # UI draw code
         col = layout.column()
         row = col.row(align=True)
-
         row.prop(self, 'emit_debug_files')
+        row = col.row(align=True)
+        row.prop(self, 'platform')
 
     @classmethod
     def register(cls):
