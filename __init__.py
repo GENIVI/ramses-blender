@@ -52,9 +52,18 @@ from ramses_export import utils
 from ramses_export.ramses_inspector import RamsesInspector
 from ramses_export.exporter import RamsesBlenderExporter
 from bpy_extras.io_utils import ExportHelper
+from bpy.types import (
+    # NOTE: failing to import these will fail silently
+    PropertyGroup,
+    UIList
+)
+
 from bpy.props import (
+    # NOTE: failing to import these will fail silently
     StringProperty,
-    BoolProperty
+    BoolProperty,
+    CollectionProperty,
+    IntProperty
 )
 
 log = debug_utils.get_debug_logger()
@@ -64,6 +73,30 @@ def menu_func_export(self, context):
     """Sets up the entry in the export menu when appropriately registered
     in __init__.py"""
     self.layout.operator(RamsesExportOperator.bl_idname, text='RAMSES Scenes (.ramses, .ramres)')
+
+
+class Mesh_ListItem(bpy.types.PropertyGroup):
+    """Group of properties representing an item in the Mesh list."""
+    name: bpy.props.StringProperty(name="Name", description="A mesh in the scene", default="Untitled")
+    use_custom_GLSL: bpy.props.BoolProperty(name="Use custom GLSL for the selected mesh", \
+                                            description="Uses custom GLSL code for this mesh. Must be of format <output_path>/<mesh_name>.(vert/frag)",
+                                            default=False)
+
+
+class MeshUIList(UIList):
+    """A list displayed in the GLSL tab."""
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
+        """The draw call for the UIList shown in the GLSL tab"""
+
+        # We could write some code to decide which icon to use here...
+        custom_icon = 'OBJECT_DATAMODE'
+
+        if self.layout_type in {'DEFAULT', 'COMPACT'}:
+        # Make sure to support all 3 layout types
+            layout.label(text=item.name, icon=custom_icon)
+        elif self.layout_type in {'GRID'}:
+            layout.alignment = 'CENTER'
+            layout.label("", icon = custom_icon)
 
 
 class RamsesExportOperator(bpy.types.Operator):
@@ -96,12 +129,24 @@ class RamsesExportOperator(bpy.types.Operator):
                                      description='Platform to use for previews')
 
     ui_tab: bpy.props.EnumProperty(items=(('GENERAL', "General", "General settings"),
-                                          ('GLSL', "GLSL", "Use custom GLSL for meshes")),
+                                          ('MESH', "Mesh", "Mesh settings")),
                                    name="ui_tab",
                                    description="Export setting categories")
 
+
+    mesh_list: bpy.props.CollectionProperty(type=Mesh_ListItem)
+
+    mesh_list_index: bpy.props.IntProperty(name="index for the MeshUIList", default = 0)
+
     def invoke(self, context, event):
         context.window_manager.fileselect_add(self)
+
+        # Populate the GLSL list as soon as the fileselect window opens
+        for mesh in bpy.data.meshes:
+            mesh_in_list = self.mesh_list.add()
+            mesh_in_list.name = mesh.name
+            mesh_in_list.use_custom_GLSL = False
+
         return {'RUNNING_MODAL'}
 
     def execute(self, context):
@@ -136,8 +181,8 @@ class RamsesExportOperator(bpy.types.Operator):
         self.layout.prop(self, 'ui_tab', expand=True)
         if self.ui_tab == 'GENERAL':
             self.draw_general_settings(layout, scn)
-        elif self.ui_tab == 'GLSL':
-            self.draw_glsl_settings(layout, scn)
+        elif self.ui_tab == 'MESH':
+            self.draw_mesh_settings(layout, scn)
 
     def draw_general_settings(self, layout, scn):
         col = layout.column()
@@ -146,8 +191,15 @@ class RamsesExportOperator(bpy.types.Operator):
         row = col.row(align=True)
         row.prop(self, 'platform')
 
-    def draw_glsl_settings(self, layout, scn):
-        pass # TODO
+    def draw_mesh_settings(self, layout, scn):
+         row = layout.row()
+         row.template_list("MeshUIList", "", self, "mesh_list", self, "mesh_list_index")
+
+         if self.mesh_list and self.mesh_list_index >= 0:
+            item = self.mesh_list[self.mesh_list_index]
+            row = layout.row()
+            row.prop(item, "use_custom_GLSL")
+
     # ------- User Interface --------------------
 
     @classmethod
@@ -163,6 +215,9 @@ class RamsesExportOperator(bpy.types.Operator):
 
 classes = (
     # Add all classes that must be registered and unregistered
+    # Registration order matters
+    Mesh_ListItem,
+    MeshUIList,
     RamsesExportOperator,
 )
 
@@ -186,4 +241,3 @@ def unregister():
 
     log.info("RAMSES Scene Exporter: Add-on unregistered.")
     print("RAMSES Scene Exporter: Add-on unregistered.")
-
