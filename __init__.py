@@ -95,6 +95,11 @@ class RamsesExportOperator(bpy.types.Operator):
                                             ('windows-wgl-es-3-0.exe', 'windows-wgl-es-3-0', 'windows-wgl-es-3-0')],
                                      description='Platform to use for previews')
 
+    ui_tab: bpy.props.EnumProperty(items=(('GENERAL', "General", "General settings"),
+                                          ('GLSL', "GLSL", "Use custom GLSL for meshes")),
+                                   name="ui_tab",
+                                   description="Export setting categories")
+
     def invoke(self, context, event):
         context.window_manager.fileselect_add(self)
         return {'RUNNING_MODAL'}
@@ -123,16 +128,27 @@ class RamsesExportOperator(bpy.types.Operator):
 
         return {'FINISHED'}
 
+    # ------- User Interface --------------------
     def draw(self, context):
         layout = self.layout
         scn = context.scene
 
-        # UI draw code
+        self.layout.prop(self, 'ui_tab', expand=True)
+        if self.ui_tab == 'GENERAL':
+            self.draw_general_settings(layout, scn)
+        elif self.ui_tab == 'GLSL':
+            self.draw_glsl_settings(layout, scn)
+
+    def draw_general_settings(self, layout, scn):
         col = layout.column()
         row = col.row(align=True)
         row.prop(self, 'emit_debug_files')
         row = col.row(align=True)
         row.prop(self, 'platform')
+
+    def draw_glsl_settings(self, layout, scn):
+        pass # TODO
+    # ------- User Interface --------------------
 
     @classmethod
     def register(cls):
@@ -170,3 +186,4 @@ def unregister():
 
     log.info("RAMSES Scene Exporter: Add-on unregistered.")
     print("RAMSES Scene Exporter: Add-on unregistered.")
+
