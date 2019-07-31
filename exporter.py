@@ -13,6 +13,7 @@ import math
 import itertools
 from . import RamsesPython
 from . import debug_utils
+from . import utils
 from .exportable_scene import ExportableScene
 from .intermediary_representation import *
 from typing import List
@@ -188,36 +189,21 @@ class RamsesBlenderExporter():
             vertices = scene.createVertexArray(3, ir_node.get_vertex_buffer())
             # TODO normals, texcoords...
 
+            vertex_shader = ir_node.vertex_shader
+            fragment_shader = ir_node.fragment_shader
+            default_vertex_shader, default_fragment_shader = utils.load_shaders('default')
 
-            vertShader = """
-            #version 300 es
+            # NOTE: if we want neither the default nor custom GLSL but instead want to derive
+            # i.e.: shaders from material nodes or something similar, this is the place to change it
+            if not vertex_shader:
+                vertex_shader = default_vertex_shader
+                log.debug(f'Loaded a vertex shader for {ir_node.name} Source is:\n{vertex_shader}')
 
-            in vec3 a_position;
-            uniform highp mat4 u_ModelMatrix;
-            uniform highp mat4 u_ViewMatrix;
-            uniform highp mat4 u_ProjectionMatrix;
+            if not fragment_shader:
+                fragment_shader = default_fragment_shader
+                log.debug(f'Loaded a fragment shader for {ir_node.name} Source is:\n{fragment_shader}')
 
-            void main()
-            {
-                gl_Position = u_ProjectionMatrix * u_ViewMatrix * u_ModelMatrix * vec4(a_position.xyz, 1.0);
-            }
-            """
-
-            fragShader = """
-            #version 300 es
-
-            precision mediump float;
-
-            out vec4 FragColor;
-
-            void main(void)
-            {
-                FragColor = vec4(1.0, 1.0, 1.0, 1.0);
-            }
-
-            """
-
-            ramses_effect = scene.createEffect(vertShader, fragShader)
+            ramses_effect = scene.createEffect(vertex_shader, fragment_shader)
             geometry = scene.createGeometry(ramses_effect)
             appearance = scene.createAppearance(ramses_effect)
 
