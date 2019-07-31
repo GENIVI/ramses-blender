@@ -32,13 +32,13 @@ class RamsesBlenderExporter():
     def get_exportable_scenes(self) -> List[ExportableScene]:
         return self.exportable_scenes
 
-    def extract_from_blender_scene(self):
+    def extract_from_blender_scene(self, custom_params=None):
         """Extract the scene graph from Blender, building an internal
         representation that can then be used to build a RAMSES scene"""
 
         for scene in self.scenes:
             extractor = BlenderRamsesExtractor(scene)
-            representation = extractor.run()
+            representation = extractor.run(custom_params)
             representation.build_ir()
             self.scene_representations.append(representation)
 
@@ -434,7 +434,7 @@ class BlenderRamsesExtractor():
     def __init__(self, scene: bpy.types.Scene):
         self.scene = scene
 
-    def run(self):
+    def run(self, custom_params=None):
         log.debug(f'Extracting data from scene {self.scene}')
-        representation = SceneRepresentation(self.scene)
+        representation = SceneRepresentation(self.scene, custom_params)
         return representation

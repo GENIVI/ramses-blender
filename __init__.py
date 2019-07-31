@@ -138,25 +138,49 @@ class RamsesExportOperator(bpy.types.Operator):
 
     mesh_list_index: bpy.props.IntProperty(name="index for the MeshUIList", default = 0)
 
-    def invoke(self, context, event):
-        context.window_manager.fileselect_add(self)
-
-        # Populate the GLSL list as soon as the fileselect window opens
+    def glsl_list_init(self):
+        # Populate the GLSL UI list as soon as the fileselect window opens
         for mesh in bpy.data.meshes:
             mesh_in_list = self.mesh_list.add()
             mesh_in_list.name = mesh.name
             mesh_in_list.use_custom_GLSL = False
 
+    def get_CustomParams(self):
+        """Extra parameters we might set that are not a part of the Blender scene itself"""
+        ret = {}
+        for list_item in self.mesh_list:
+            # Mesh names are supposed to be unique?
+            # The Blender UI will not allow two objects with the same name so maybe
+            # it is safe to use it as an index
+            assert list_item.name
+            assert bpy.data.meshes[list_item.name]
+
+            custom_params = utils.CustomParameters()
+            if list_item.use_custom_GLSL:
+                # If set in the UI, set it also in the corresponding blender object
+                custom_params.use_custom_GLSL = True
+                # Directory for shaders is the output directory
+                custom_params.shader_dir = self.directory
+
+            ret[list_item.name] = custom_params
+        return ret
+
+    def invoke(self, context, event):
+        context.window_manager.fileselect_add(self)
+        self.glsl_list_init()
         return {'RUNNING_MODAL'}
 
     def execute(self, context):
+        # Execute is called once the 'Export as RAMSES Scenes' button is clicked
+        # so, the perfect place to set up any extra state we want before processing
+        params = self.get_CustomParams()
 
         if self.emit_debug_files and not debug_utils.debug_logger_set:
             debug_utils.setup_logging(f'{self.directory}debug.txt') # Master log file
             debug_utils.debug_logger_set = True
 
         exporter = RamsesBlenderExporter(bpy.data.scenes)
-        exporter.extract_from_blender_scene()
+        exporter.extract_from_blender_scene(params)
         exporter.build_from_extracted_representations()
 
         for exportable_scene in exporter.get_exportable_scenes():

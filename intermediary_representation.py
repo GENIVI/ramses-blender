@@ -12,10 +12,12 @@ import bpy
 import bmesh
 from . import RamsesPython
 from . import debug_utils
+from . import utils
 import mathutils
-from typing import List, Any
+from typing import List, Any, Dict
 import math
 import itertools
+import pathlib
 
 log = debug_utils.get_debug_logger()
 
@@ -24,9 +26,12 @@ class SceneRepresentation():
     RAMSES.
     """
 
-    def __init__(self, scene: bpy.types.Scene):
+    def __init__(self, scene: bpy.types.Scene, custom_params: Dict[str, utils.CustomParameters]=None):
         self.scene = scene
         self.graph = SceneGraph(scene)
+        if not custom_params:
+            custom_params = {}
+        self.custom_params = custom_params
 
     def build_ir(self):
         """Builds the intermediary representation from the Blender
@@ -35,8 +40,31 @@ class SceneRepresentation():
         for o in self.scene.objects:
             self.graph.add_node(o)
 
+        self._doCustomParams(self.custom_params)
+
     def teardown(self):
         self.graph.teardown()
+
+    def _doCustomParams(self, custom_params):
+        for scene_object_name, params in custom_params.items():
+            blender_object = self.scene.objects[scene_object_name]
+            node = self.graph.find_from_blender_object(blender_object)
+
+            if not node:
+                # Malformed meshes or other issues
+                log.debug(f'Specified extra parameters for object {blender_object.name} but it did not get translated.')
+                return
+
+            node = node[0]
+
+            if params.use_custom_GLSL:
+                vert_shader, frag_shader = self._load_shaders(scene_object_name, dir=params.shader_dir)
+                node.vertex_shader = vert_shader
+                node.fragment_shader = frag_shader
+
+    def _load_shaders(self, scene_object_name, dir:str=None):
+        return utils.load_shaders(scene_object_name, dir)
+
 
 class Node():
     """A base class for operations every node must support"""
@@ -80,6 +108,10 @@ class Node():
         # The collections in which this node appears. This is a new
         # concept in Blender 2.8 for organizational purposes only.
         self.users_collections = []
+
+        # Optional GLSL source code to use when rendering this node
+        self.vertex_shader = ''
+        self.fragment_shader = ''
 
         if blender_object:
             self._init_from_blender_object(blender_object)
