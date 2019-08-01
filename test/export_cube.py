@@ -7,6 +7,7 @@
 #  -------------------------------------------------------------------------
 
 import os
+import subprocess
 import bpy
 
 from ramses_export.test.exporter_test_base import ExporterTestBase
@@ -33,12 +34,20 @@ class ExportCubeTest(ExporterTestBase):
             validation_report = exportable_scene.get_validation_report()
             raise AssertionError(validation_report)
 
+        # TODO resolution should come from blender, not specified here
         exportable_scene.save()
-        # TODO resolution should come from the exported scene's camera viewport setting
-        window = exporter.ramses.openWindow(800, 600, 0, 0)
-        window.showScene(exportable_scene.ramses_scene)
-        window.takeScreenshot(os.path.join(self.working_dir, f'screenshot.png'))
-        window.close()
+        screenshot_path = os.path.join(self.working_dir, f'screenshot.png')
+        program_args = f'-s {exportable_scene.output_path}{exportable_scene.blender_scene.name} -x {screenshot_path} -xw 800 -xh 600'
+        program = f'ramses-scene-viewer-{self.platform.lower()}'
+        cmd = [f'{self.addon_path}/bin/{program}',
+            '-s', f'{exportable_scene.output_path}/{exportable_scene.blender_scene.name}',
+            '-x', screenshot_path,
+            '-xw', '800',
+            '-xh', '600']
+
+        viewer_process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out, err = viewer_process.communicate()
+
 
         with open(os.path.join(self.working_dir, f'scene.txt'), 'w') as file:
             file.write(exportable_scene.ramses_scene.toText())
