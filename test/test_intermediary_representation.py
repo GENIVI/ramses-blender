@@ -13,8 +13,15 @@ import unittest
 import bpy
 from ramses_export.intermediary_representation import *
 import ramses_export.debug_utils
+from ramses_export.test.exporter_test_base import ExporterTestBase
 
-class TestVectorUnpack(unittest.TestCase):
+
+class TestVectorUnpack(ExporterTestBase, unittest.TestCase):
+    def __init__(self, methodName='runTest'):
+        # Deriving from ExporterTestBase makes passing arguments easier
+        unittest.TestCase.__init__(self, methodName)
+        ExporterTestBase.__init__(self)
+
     def setUp(self):
         scene = bpy.context.scene
 

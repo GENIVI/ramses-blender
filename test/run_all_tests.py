@@ -59,15 +59,22 @@ class AdaptedArgParser(argparse.ArgumentParser):
 
 def main():
     parser = AdaptedArgParser()
+    # NOTE: to add arguments to tests first add them here, and them in 'test_args' and lastly
+    # NOTE: in exporter_test_base.py
     parser.add_argument("-b", "--blender-binary", required=True, default=None, help='Path blender executable')
     parser.add_argument("-r", "--test-results-path", default=None, help='Path to store test results')
     parser.add_argument("-s", "--run-single-test", default=None, help='Run specific test')
+    parser.add_argument("-p", "--platform", required=True, default=None, help="The platform to use for the renderer, such as 'X11-EGL-ES-3-0, WAYLAND-SHELL-EGL-ES-3-0, etc.")
+    parser.add_argument("-a", "--addon-path", required=True, default=None, help='The install directory for the addon, e.g. "~/.config/blender/2.80/scripts/addons/ramses_export" or similar')
 
     args = parser.parse_args()
     if not os.path.exists(args.blender_binary):
         print(f'{args.blender_binary} is not a valid Blender executable!')
         return 1
 
+    if not os.path.exists(args.addon_path):
+        print(f'{args.addon_path} is not a valid path!')
+        return 1
     current_path = os.path.dirname(os.path.realpath(__file__))
     test_results = args.test_results_path if args.test_results_path else os.path.join(current_path, 'test_results')
 
@@ -82,7 +89,7 @@ def main():
                 'script'        : os.path.join(current_path, 'run_unit_tests.py'),
                 'test_scene'    : os.path.join(current_path, 'test_scenes/cube.blend'),
                 'expected_image': '',
-                'expected_output_files': 0,
+                'expected_output_files': 1, # The debug log will be generated
             },
         'export_cube' :
             {
@@ -141,10 +148,15 @@ def main():
             '-P', tests[test]['script'],                    # Execute script and close
             '--',                                           # Separator for script command line args
             '--working-dir', test_result_dir,               # Path to store results
+            '--platform', args.platform,                    # Platform for the renderer
+            '--addon-path', args.addon_path                 # Path to Blender's addons directory
             ]
 
         p = subprocess.Popen(test_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=test_results)
         out, err = p.communicate()
+
+        if 'unrecognized arguments' in str(out):
+            print(f"Test {test}: unrecognized arguments found, please check exporter_test_base.py")
 
         if test == 'unit_tests':
             print(f"UNIT TESTS OUTPUT: \n{err.decode('utf-8')}")

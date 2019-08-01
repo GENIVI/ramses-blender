@@ -11,13 +11,21 @@
 
 import unittest
 import bpy
+import os
 import ramses_export.debug_utils
 import ramses_export.exporter
 import ramses_export.ramses_inspector
 import ramses_export.RamsesPython
 
+from ramses_export.test.exporter_test_base import ExporterTestBase
 
-class TestRamsesBlenderExporter(unittest.TestCase):
+
+class TestRamsesBlenderExporter(ExporterTestBase, unittest.TestCase):
+    def __init__(self, methodName='runTest'):
+        # Deriving from ExporterTestBase makes passing arguments easier
+        unittest.TestCase.__init__(self, methodName)
+        ExporterTestBase.__init__(self)
+
     def setUp(self):
         pass
 
@@ -42,7 +50,8 @@ class TestRamsesBlenderExporter(unittest.TestCase):
 
         for exportable_scene in exporter.get_exportable_scenes():
             inspector = ramses_export.ramses_inspector.RamsesInspector(exportable_scene)
-            inspector.load_viewer()
+            os.chdir(self.addon_path)
+            inspector.load_viewer(self.platform)
 
             if not exportable_scene.is_valid():
                 validation_report = exportable_scene.get_validation_report()
