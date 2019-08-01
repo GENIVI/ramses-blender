@@ -25,7 +25,7 @@ class RamsesInspector():
         self.scene = scene
         self.viewer_process = None
 
-    def load_viewer(self, platform, block: bool = False):
+    def load_viewer(self, platform, block: bool = False, screenshot_path: str = None):
         """Loads the RAMSES scene viewer for visual inspection of the
         generated scene"""
 
@@ -37,7 +37,15 @@ class RamsesInspector():
         resolution_x = self.scene.blender_scene.render.resolution_x
         resolution_y = self.scene.blender_scene.render.resolution_y
 
-        program_args = f'-s {self.scene.output_path}{self.scene.blender_scene.name} -x -w {resolution_x} -h {resolution_y}'
+        viewer_path = pathlib.Path(self.scene.output_path).joinpath(self.scene.blender_scene.name)
+
+        program_args = f'-s {str(viewer_path)} -w {resolution_x} -h {resolution_y}'
+
+        if screenshot_path:
+            assert isinstance(screenshot_path, str)
+            program_args += ' '
+            program_args += f'-x {screenshot_path} -xw {resolution_x} -xh {resolution_y}'
+
         program = f'ramses-scene-viewer-{platform}'
         cmd = f'bin/{program} {program_args}'
 
