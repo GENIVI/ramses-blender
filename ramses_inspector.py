@@ -30,7 +30,6 @@ class RamsesInspector():
         generated scene"""
 
         assert isinstance(platform, str)
-        platform = platform.lower()
 
         self.close_viewer()
 

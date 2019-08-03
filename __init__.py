@@ -86,9 +86,9 @@ class RamsesExportOperator(bpy.types.Operator):
                                              + 'write a debug.txt file')
 
     platform: bpy.props.EnumProperty(name='Platform',
-                                     items=[('X11-EGL-ES-3-0', 'X11-EGL-ES-3-0', 'X11-EGL-ES-3-0'), # (identifier, name, description)
-                                            ('WAYLAND-IVI-EGL-ES-3-0', 'WAYLAND-IVI-EGL-ES-3-0', 'WAYLAND-IVI-EGL-ES-3-0'),
-                                            ('WAYLAND-SHELL-EGL-ES-3-0', 'WAYLAND-SHELL-EGL-ES-3-0', 'WAYLAND-SHELL-EGL-ES-3-0')],
+                                     items=[('x11-egl-es-3-0', 'x11-egl-es-3-0', 'x11-egl-es-3-0'), # (identifier, name, description)
+                                            ('wayland-ivi-egl-es-3-0', 'wayland-ivi-egl-es-3-0', 'wayland-ivi-egl-es-3-0'),
+                                            ('wayland-shell-egl-es-3-0', 'wayland-shell-egl-es-3-0', 'wayland-shell-egl-es-3-0')],
                                      description='Platform to use for previews')
 
     def invoke(self, context, event):
