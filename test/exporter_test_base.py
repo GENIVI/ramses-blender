@@ -10,6 +10,7 @@ import os
 import bpy
 import argparse
 import subprocess
+import shutil
 
 from ramses_export import debug_utils
 from ramses_export.exporter import RamsesBlenderExporter
@@ -32,12 +33,14 @@ class ExporterTestBase():
         parser.add_argument("-w", "--working-dir", required=True, default=None, help='Working directory for this test')
         parser.add_argument("-p", "--platform", required=True, default=None, help="The platform to use for the renderer, such as 'X11-EGL-ES-3-0, WAYLAND-SHELL-EGL-ES-3-0, etc.")
         parser.add_argument("-a", "--addon-path", required=True, default=None, help='The install directory for the addon, e.g. "~/.config/blender/2.80/scripts/addons/ramses_export" or similar')
+        parser.add_argument("-g", "--generate-expected-screenshots", required=False, default=False, type=bool, help='Whether to copy the generated screenshots to "expected_results/"')
         index_of_double_dash = sys.argv.index('--')
         args_for_test_only = sys.argv[index_of_double_dash + 1:] if index_of_double_dash != -1 else []
         args = parser.parse_args(args_for_test_only)
         self.working_dir = args.working_dir
         self.platform = args.platform
         self.addon_path = args.addon_path
+        self.generate_expected_screenshots = args.generate_expected_screenshots
 
         debug_utils.setup_logging(os.path.join(self.working_dir, 'debug.txt'))
 
@@ -49,7 +52,8 @@ class ExporterTestBase():
                                        to_text: bool = True,
                                        open_viewer: bool = False,
                                        take_screenshot: bool = True,
-                                       platform: str = ''):
+                                       platform: str = '',
+                                       generate_expected_screenshots: bool = False):
 
         # Make configurable, but otherwise get them from CLI
         if not output_dir:
@@ -61,6 +65,9 @@ class ExporterTestBase():
         if not platform:
             platform = self.platform
 
+        if not generate_expected_screenshots:
+            generate_expected_screenshots = self.generate_expected_screenshots
+
         assert isinstance(num_scenes, int)
         assert num_scenes > 0
 
@@ -69,6 +76,8 @@ class ExporterTestBase():
             assert platform
             assert addon_path
 
+        if generate_expected_screenshots:
+            assert take_screenshot
 
         exporter = RamsesBlenderExporter(bpy.data.scenes)
         exporter.extract_from_blender_scene()
@@ -112,12 +121,21 @@ class ExporterTestBase():
                 program = f'ramses-scene-viewer-{platform}'
                 cmd = [f'{addon_path}/bin/{program}',
                     '-s', f'{exportable_scene.output_path}/{exportable_scene.blender_scene.name}',
-                    '-x', screenshot_path,
+                    '-x', str(screenshot_path),
                     '-xw', str(screenshot_resolution_x),
                     '-xh', str(screenshot_resolution_y)]
 
                 viewer_process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 out, err = viewer_process.communicate()
+
+                if generate_expected_screenshots:
+                    screenshot_current_path, _ = os.path.split(screenshot_path)
+                    _, screenshot_current_dir = os.path.split(screenshot_current_path)
+                    copied_screenshot_name = str(screenshot_current_dir)
+
+                    save_path = os.path.join(screenshot_current_path, f'../../expected_results/{copied_screenshot_name}.png')
+                    assert save_path
+                    shutil.copyfile(screenshot_path, save_path)
 
                 if viewer_process.returncode:
                     raise RuntimeError(viewer_process.returncode)
