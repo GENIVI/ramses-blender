@@ -66,7 +66,7 @@ def main():
     parser.add_argument("-s", "--run-single-test", default=None, help='Run specific test')
     parser.add_argument("-p", "--platform", required=True, default=None, help="The platform to use for the renderer, such as 'X11-EGL-ES-3-0, WAYLAND-SHELL-EGL-ES-3-0, etc.")
     parser.add_argument("-a", "--addon-path", required=True, default=None, help='The install directory for the addon, e.g. "~/.config/blender/2.80/scripts/addons/ramses_export" or similar')
-    parser.add_argument("-g", "--generate-expected-screenshots", required=False, default=False, type=bool, help='Whether to copy the generated screenshots to "expected_results/"')
+    parser.add_argument("-g", "--generate-expected-screenshots", required=False, default=False, action='store_true', help='Whether to copy the generated screenshots to "expected_results/"')
 
     args = parser.parse_args()
     if not os.path.exists(args.blender_binary):
@@ -214,9 +214,13 @@ def main():
             '--',                                           # Separator for script command line args
             '--working-dir', test_result_dir,               # Path to store results
             '--platform', args.platform,                    # Platform for the renderer
-            '--addon-path', args.addon_path,                 # Path to Blender's addons directory
-            '--generate-expected-screenshots', str(args.generate_expected_screenshots)                 # Whether to copy the generated screenshots to "expected_results/"
+            '--addon-path', args.addon_path                 # Path to Blender's addons directory
             ]
+
+        if args.generate_expected_screenshots:
+            # NOTE: This is how boolean flags get handled.
+            # NOTE: Should append if new boolean flags are added
+            test_args.append('--generate-expected-screenshots') # Whether to copy screenshots into 'expected_results/'
 
         p = subprocess.Popen(test_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=test_results)
         out, err = p.communicate()

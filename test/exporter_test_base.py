@@ -33,7 +33,7 @@ class ExporterTestBase():
         parser.add_argument("-w", "--working-dir", required=True, default=None, help='Working directory for this test')
         parser.add_argument("-p", "--platform", required=True, default=None, help="The platform to use for the renderer, such as 'X11-EGL-ES-3-0, WAYLAND-SHELL-EGL-ES-3-0, etc.")
         parser.add_argument("-a", "--addon-path", required=True, default=None, help='The install directory for the addon, e.g. "~/.config/blender/2.80/scripts/addons/ramses_export" or similar')
-        parser.add_argument("-g", "--generate-expected-screenshots", required=False, default=False, type=bool, help='Whether to copy the generated screenshots to "expected_results/"')
+        parser.add_argument("-g", "--generate-expected-screenshots", required=False, default=False, action='store_true', help='Whether to copy the generated screenshots to "expected_results/"')
         index_of_double_dash = sys.argv.index('--')
         args_for_test_only = sys.argv[index_of_double_dash + 1:] if index_of_double_dash != -1 else []
         args = parser.parse_args(args_for_test_only)
