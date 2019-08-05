@@ -107,12 +107,14 @@ class ExporterTestBase():
 
             if take_screenshot:
                 screenshot_path = os.path.join(output_dir, f'screenshot.png')
+                screenshot_resolution_x = exportable_scene.blender_scene.render.resolution_x
+                screenshot_resolution_y = exportable_scene.blender_scene.render.resolution_y
                 program = f'ramses-scene-viewer-{platform}'
                 cmd = [f'{addon_path}/bin/{program}',
                     '-s', f'{exportable_scene.output_path}/{exportable_scene.blender_scene.name}',
                     '-x', screenshot_path,
-                    '-xw', '800',
-                    '-xh', '600']
+                    '-xw', str(screenshot_resolution_x),
+                    '-xh', str(screenshot_resolution_y)]
 
                 viewer_process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 out, err = viewer_process.communicate()
