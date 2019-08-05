@@ -142,13 +142,6 @@ def main():
                 'expected_image': os.path.join(current_path, 'expected_results/export_rotatedX30_cube.png'),
                 'expected_output_files': 5,
             },
-        'export_rotatedX30_cube' :
-            {
-                'script'        : os.path.join(current_path, 'export_cube_rotated_X30.py'),
-                'test_scene'    : os.path.join(current_path, 'test_scenes/cube_rotatedX30.blend'),
-                'expected_image': os.path.join(current_path, 'expected_results/export_rotatedX30_cube.png'),
-                'expected_output_files': 5,
-            },
         'export_rotatedY45_cube' :
             {
                 'script'        : os.path.join(current_path, 'export_cube_rotated_Y45.py'),
