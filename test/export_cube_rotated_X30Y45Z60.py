@@ -45,10 +45,6 @@ class TestExportCubeRotatedX30Y45Z60(ExporterTestBase, unittest.TestCase):
 
     def test_rotated_x_30_y_45_z_60(self):
 
-        exporter = ramses_export.exporter.RamsesBlenderExporter(bpy.data.scenes)
-        exporter.extract_from_blender_scene()
-        exporter.build_from_extracted_representations()
-
         import math
 
         sin30 = math.sin(math.radians(30))
@@ -59,10 +55,7 @@ class TestExportCubeRotatedX30Y45Z60(ExporterTestBase, unittest.TestCase):
         cos45 = math.cos(math.radians(45))
         cos60 = math.cos(math.radians(60))
 
-        for exportable_scene in exporter.get_exportable_scenes():
-            if not exportable_scene.is_valid():
-                validation_report = exportable_scene.get_validation_report()
-                raise RuntimeError(validation_report)
+        for exportable_scene in self.get_exportable_scenes_for_test():
             x = [[1.0, 0.0, 0.0, 0.0], [0.0, cos30, sin30, 0.0], [0.0, -sin30, cos30, 0.0], [0.0, 0.0, 0.0, 1.0]]
 
             y = [[cos45, 0.0, -sin45, 0.0], [0.0, 1.0, 0.0, 0.0], [sin45, 0.0, cos45, 0.0], [0.0, 0.0, 0.0, 1.0]]

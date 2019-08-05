@@ -9,6 +9,7 @@
 import os
 import subprocess
 import bpy
+import unittest
 
 from ramses_export.test.exporter_test_base import ExporterTestBase
 
@@ -18,42 +19,30 @@ from ramses_export.exporter import RamsesBlenderExporter
 from ramses_export import RamsesPython
 
 
-class ExportCubeTest(ExporterTestBase):
-    def execute(self):
+class ExportCubeTest(ExporterTestBase, unittest.TestCase):
 
-        exporter = RamsesBlenderExporter(bpy.data.scenes)
-        exporter.extract_from_blender_scene()
-        exporter.build_from_extracted_representations()
+    def __init__(self, methodName='runTest'):
+        unittest.TestCase.__init__(self, methodName)
+        ExporterTestBase.__init__(self)
 
-        if len(exporter.get_exportable_scenes()) != 1:
-            raise AssertionError(f'Expected one scene, found {len(exporter.get_exportable_scenes())}')
-        exportable_scene = exporter.get_exportable_scenes()[0]
-        exportable_scene.set_output_dir(self.working_dir)
+    def setUp(self):
+        pass
 
-        if not exportable_scene.is_valid():
-            validation_report = exportable_scene.get_validation_report()
-            raise AssertionError(validation_report)
+    def tearDown(self):
+        pass
 
-        # TODO resolution should come from blender, not specified here
-        exportable_scene.save()
-        screenshot_path = os.path.join(self.working_dir, f'screenshot.png')
-        program_args = f'-s {exportable_scene.output_path}{exportable_scene.blender_scene.name} -x {screenshot_path} -xw 800 -xh 600'
-        program = f'ramses-scene-viewer-{self.platform.lower()}'
-        cmd = [f'{self.addon_path}/bin/{program}',
-            '-s', f'{exportable_scene.output_path}/{exportable_scene.blender_scene.name}',
-            '-x', screenshot_path,
-            '-xw', '800',
-            '-xh', '600']
+    def test_export_cube(self):
+        for exportable_scene in self.get_exportable_scenes_for_test(take_screenshot=True):
+            self.assertTrue(exportable_scene.is_valid())
+            # just make sure we get a valid screenshot. Currently, code in run_all_tests.py
+            # will check this for us automatically
 
-        viewer_process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        out, err = viewer_process.communicate()
+if __name__ == '__main__':
+    suite_1 = unittest.defaultTestLoader.\
+            loadTestsFromTestCase(ExportCubeTest)
 
+    all_tests = unittest.TestSuite([suite_1])
 
-        with open(os.path.join(self.working_dir, f'scene.txt'), 'w') as file:
-            file.write(exportable_scene.ramses_scene.toText())
-        with open(os.path.join(self.working_dir, f'scene_cube.txt'), 'w') as file:
-            file.write(exportable_scene.ramses_scene.toText('Cube'))
-
-if __name__ == "__main__":
-    test = ExportCubeTest()
-    test.execute()
+    success = unittest.TextTestRunner().run(all_tests).wasSuccessful()
+    if not success:
+        raise Exception('Test "export cube" failed')

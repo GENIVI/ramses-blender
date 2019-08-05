@@ -32,14 +32,7 @@ class TestExportCubeRotated_YZX(ExporterTestBase, unittest.TestCase):
 
     def test_rotation_mode_YZX(self):
 
-        exporter = ramses_export.exporter.RamsesBlenderExporter(bpy.data.scenes)
-        exporter.extract_from_blender_scene()
-        exporter.build_from_extracted_representations()
-
-        for exportable_scene in exporter.get_exportable_scenes():
-            if not exportable_scene.is_valid():
-                validation_report = exportable_scene.get_validation_report()
-                raise RuntimeError(validation_report)
+        for exportable_scene in self.get_exportable_scenes_for_test():
 
             cube = exportable_scene.ramses_scene.findObjectByName('Cube')
             cube_node = ramses_export.RamsesPython.toNode(cube)

@@ -32,14 +32,7 @@ class TestExportCubeTranslated1X2Y3Z(ExporterTestBase, unittest.TestCase):
 
     def test_translation_1x_2y_3z(self):
 
-        exporter = ramses_export.exporter.RamsesBlenderExporter(bpy.data.scenes)
-        exporter.extract_from_blender_scene()
-        exporter.build_from_extracted_representations()
-
-        for exportable_scene in exporter.get_exportable_scenes():
-            if not exportable_scene.is_valid():
-                validation_report = exportable_scene.get_validation_report()
-                raise RuntimeError(validation_report)
+        for exportable_scene in self.get_exportable_scenes_for_test():
 
             expected_final_transform = []
             # This was obtained by running Blender with the file above, exporting,
