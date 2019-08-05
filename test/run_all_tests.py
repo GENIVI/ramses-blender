@@ -253,10 +253,16 @@ def main():
 
         if tests[test]['expected_image']:
             screenshot_image = os.path.join(test_results, test, 'screenshot.png')
-            image_comparison = ImageComparison(screenshot_image, tests[test]['expected_image'])
-            if not image_comparison.compare_images():
+            image_comparison = None
+            try:
+                image_comparison = ImageComparison(screenshot_image, tests[test]['expected_image'])
+                if not image_comparison.compare_images():
+                    test_failed = True
+                    print(f'Test {test} produced different screenshot than expected! Check {test_results} for results')
+            except FileNotFoundError as e:
+                print(f'Test {test} failed, cannot compare screenshots: {str(e)}')
                 test_failed = True
-                print(f'Test {test} produced different screenshot than expected! Check {test_results} for results')
+
 
         if test_failed:
             failed_tests = failed_tests + [test]
