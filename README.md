@@ -59,11 +59,13 @@ Install the addon using CMake. You will have setup a debugger yourself. See [thi
 
 How do I run the tests?
 =======================
-This project includes both unit and end-to-end tests. You can run the tests with ```python tests/run_all_tests.py -b <path_to_your_blender_binary>```.
+This project includes both unit and end-to-end tests. You can run the tests with ```python test/run_all_tests.py -b <path_to_your_blender_binary> -p <platform> -a <addon_path>```.
 
-Some tests are vanilla unit tests built with Python's ```unittest``` module, while others check the screenshot of the exported scene against a valid image to determine correctness.
+When in doubt, run ```python test/run_all_tests.py --help``` for guidance. Note that ```<addon_path>```  is the full path to where the exporter was installed.
 
-You can add more tests by appending to the test array in test/run_all_tests.py
+Some tests are vanilla unit tests built with Python's ```unittest``` module, while others check the screenshot of the exported scene against a valid image to determine correctness. This project already includes a list of screenshots of exported scenes that were manually checked to be free of errors, but these can be updated with the ```-g``` flag in the event something major is changed within the exporter  - e.g. when we start supporting materials in the future, these will need to be updated and this is the quickest way to do so.
+
+You can add more tests by appending to the test array in test/run_all_tests.py, and you can add more flags to the tests by reading the instructions in ```run_all_tests.py```.
 
 How do I debug a test?
 ======================
