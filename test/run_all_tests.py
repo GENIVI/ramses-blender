@@ -273,6 +273,8 @@ def main():
     if failed_tests:
         print('Failed tests:')
         print("\n".join(failed_tests))
+    elif args.generate_expected_screenshots:
+        print(f'Tests executed successfully! Expected screenshots were updated and stored in the expected_results folder!')
     else:
         print(f'All tests ran successfully! Check output at {test_results}')
 
