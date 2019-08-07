@@ -191,17 +191,6 @@ class RamsesBlenderExporter():
 
             vertex_shader = ir_node.vertex_shader
             fragment_shader = ir_node.fragment_shader
-            default_vertex_shader, default_fragment_shader = utils.load_shaders('default')
-
-            # NOTE: if we want neither the default nor custom GLSL but instead want to derive
-            # i.e.: shaders from material nodes or something similar, this is the place to change it
-            if not vertex_shader:
-                vertex_shader = default_vertex_shader
-                log.debug(f'Loaded a vertex shader for {ir_node.name} Source is:\n{vertex_shader}')
-
-            if not fragment_shader:
-                fragment_shader = default_fragment_shader
-                log.debug(f'Loaded a fragment shader for {ir_node.name} Source is:\n{fragment_shader}')
 
             ramses_effect = scene.createEffect(vertex_shader, fragment_shader)
             geometry = scene.createGeometry(ramses_effect)
