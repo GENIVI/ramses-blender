@@ -8,6 +8,7 @@
 #  file, You can obtain one at https://mozilla.org/MPL/2.0/.
 #  -------------------------------------------------------------------------
 
+import json
 import pathlib
 from . import debug_utils
 from . import intermediary_representation
@@ -22,6 +23,10 @@ class ShaderUtils():
         self.current_node = None
         self.current_vert_shader = ''
         self.current_frag_shader = ''
+        # A dict with extra metadata to help bridge Blender materials to RAMSES effects
+        # Read from a JSON file since it is very human-readable and easy to parse
+        # See 'https://docs.substance3d.com/sddoc/glslfx-shaders-102400055.html' as inspiration
+        self.config = {}
 
     def set_current_node(self, node: intermediary_representation.Node, shader_dir: str = None):
         assert node
@@ -29,6 +34,7 @@ class ShaderUtils():
         self.shader_dir = shader_dir if shader_dir else ''
         self.current_vert_shader, self.current_frag_shader = self._glsl_from_files() if \
             self.shader_dir else self._glsl_default()
+        self.config = self._config_from_file()
         assert self.current_vert_shader
         assert self.current_frag_shader
 
@@ -99,3 +105,11 @@ class ShaderUtils():
                     """
 
         return vertShader, fragShader
+
+    def _config_from_file(self):
+        assert self.shader_dir
+        # TODO: consider improving this
+        config_paths = list(pathlib.Path(f'{self.shader_dir}').glob(pattern='*.config'))
+        config_path = config_paths[0]
+
+        return json.loads(config_path)
