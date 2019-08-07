@@ -32,6 +32,7 @@ class SceneRepresentation():
         if not custom_params:
             custom_params = {}
         self.custom_params = custom_params
+        self.shader_utils = utils.ShaderUtils()
 
     def build_ir(self):
         """Builds the intermediary representation from the Blender
@@ -57,13 +58,16 @@ class SceneRepresentation():
 
             node = node[0]
 
-            if params.use_custom_GLSL:
-                vert_shader, frag_shader = self._load_shaders(scene_object_name, dir=params.shader_dir)
-                node.vertex_shader = vert_shader
-                node.fragment_shader = frag_shader
+            if params.shader_dir:
+                # Use custom GLSL code for node
+                assert isinstance(node, MeshNode)
+                self._Node_doCustomShaders(node, params.shader_dir)
 
-    def _load_shaders(self, scene_object_name, dir:str=None):
-        return utils.load_shaders(scene_object_name, dir)
+    def _Node_doCustomShaders(self, node: Node, shader_dir: str):
+        assert node
+        self.shader_utils.set_current_node(node, shader_dir)
+        self.shader_utils.do_node()
+        self.shader_utils.clear_current_node()
 
 
 class Node():

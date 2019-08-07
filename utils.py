@@ -9,6 +9,7 @@
 
 import os
 from . import debug_utils
+from . import intermediary_representation
 log = debug_utils.get_debug_logger()
 
 def get_addon_path():

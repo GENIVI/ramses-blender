@@ -78,9 +78,9 @@ def menu_func_export(self, context):
 class Mesh_ListItem(bpy.types.PropertyGroup):
     """Group of properties representing an item in the Mesh list."""
     name: bpy.props.StringProperty(name="Name", description="A mesh in the scene", default="Untitled")
-    use_custom_GLSL: bpy.props.BoolProperty(name="Use custom GLSL for the selected mesh", \
-                                            description="Uses custom GLSL code for this mesh. Must be of format <output_path>/<mesh_name>.(vert/frag)",
-                                            default=False)
+    mesh_GLSL_dir: bpy.props.StringProperty(name="Mesh GLSL directory",
+                                            description="The directory to look for custom GLSL shaders for the selected mesh, leave it blank to disable this",
+                                            default='')
 
 
 class MeshUIList(UIList):
@@ -143,7 +143,7 @@ class RamsesExportOperator(bpy.types.Operator):
         for mesh in bpy.data.meshes:
             mesh_in_list = self.mesh_list.add()
             mesh_in_list.name = mesh.name
-            mesh_in_list.use_custom_GLSL = False
+            mesh_in_list.mesh_GLSL_dir = ''
 
     def get_CustomParams(self):
         """Extra parameters we might set that are not a part of the Blender scene itself"""
@@ -156,11 +156,9 @@ class RamsesExportOperator(bpy.types.Operator):
             assert bpy.data.meshes[list_item.name]
 
             custom_params = utils.CustomParameters()
-            if list_item.use_custom_GLSL:
+            if list_item.mesh_GLSL_dir:
                 # If set in the UI, set it also in the corresponding blender object
-                custom_params.use_custom_GLSL = True
-                # Directory for shaders is the output directory
-                custom_params.shader_dir = self.directory
+                custom_params.shader_dir = list_item.mesh_GLSL_dir
 
             ret[list_item.name] = custom_params
         return ret
@@ -222,7 +220,7 @@ class RamsesExportOperator(bpy.types.Operator):
          if self.mesh_list and self.mesh_list_index >= 0:
             item = self.mesh_list[self.mesh_list_index]
             row = layout.row()
-            row.prop(item, "use_custom_GLSL")
+            row.prop(item, "mesh_GLSL_dir")
 
     # ------- User Interface --------------------
 
