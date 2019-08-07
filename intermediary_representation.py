@@ -13,6 +13,7 @@ import bmesh
 from . import RamsesPython
 from . import debug_utils
 from . import utils
+from . import shaders
 import mathutils
 from typing import List, Any, Dict
 import math
@@ -32,7 +33,7 @@ class SceneRepresentation():
         if not custom_params:
             custom_params = {}
         self.custom_params = custom_params
-        self.shader_utils = utils.ShaderUtils()
+        self.shader_utils = shaders.ShaderUtils()
 
     def build_ir(self):
         """Builds the intermediary representation from the Blender
