@@ -28,7 +28,7 @@ class ShaderUtils():
         # See 'https://docs.substance3d.com/sddoc/glslfx-shaders-102400055.html' as inspiration
         self.config = {}
 
-    def set_current_node(self, node: intermediary_representation.Node, shader_dir: str = None):
+    def set_current_node(self, node, shader_dir: str = None):
         assert node
         self.current_node = node
         self.shader_dir = shader_dir if shader_dir else ''
@@ -42,7 +42,7 @@ class ShaderUtils():
         self.current_node = None
         self.shader_dir = ''
 
-    def do_node(self) -> intermediary_representation.Node:
+    def do_node(self):
         # NOTE: if we want neither the default nor custom GLSL but instead want to derive
         # i.e.: shaders from material nodes or something similar, this is the place to change it
 
