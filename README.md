@@ -27,6 +27,8 @@ How do I install it?
 ====================
 As of now, you cannot install this directly from Blender itself. This project also requires building the Python bindings for RAMSES, which is referenced as a submodule. Luckily, we provide a CMake script to simplify the installation process.
 
+**First init all submodules, or else the project will not build.**
+Do this by running the following command: ```git submodule update --init --recursive```
 
 Build the plugin libraries with CMake, e.g.:
 ```
@@ -34,6 +36,8 @@ $mkdir build && cd build
 $cmake -DCMAKE_INSTALL_PREFIX=<path_to_install> -DBLENDER_ADDONS_PATH=<path_to_blender_addons_directory> ..
 $make install
 ```
+Since RAMSES comes with -Werror set by default, it is common for the build process to fail for very minor warnings. If this happens, unset ```ramses-sdk_WARNINGS_AS_ERRORS``` via cmake-gui or similar.
+
 Make sure you have the dependencies installed. RAMSES lists its dependencies in its own [README](https://github.com/GENIVI/ramses/blob/master/README.md), as does the [Python bindings](https://github.com/GENIVI/ramses-python/).
 
 You need to specify Blender's add-on directory - it is usually under **version/scripts/addons_contrib**.
