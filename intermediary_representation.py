@@ -69,6 +69,8 @@ class SceneRepresentation():
         self.shader_utils.set_current_node(node, shader_dir)
         self.shader_utils.do_node()
         self.shader_utils.clear_current_node()
+        assert node.vertex_shader
+        assert node.fragment_shader
 
 
 class Node():
@@ -271,9 +273,10 @@ class Node():
 class SceneGraph():
     """For every scene, a graph is created so we can translate concepts as close as possible"""
 
-    def __init__(self, scene: bpy.types.Scene, root: Node = None):
+    def __init__(self, scene: bpy.types.Scene, root: Node = None, shader_utils: shaders.ShaderUtils = None):
         self.root = root if root else Node(name='Root node')
         self.scene = scene
+        self.shader_utils = shader_utils if shader_utils else shaders.ShaderUtils()
 
     def add_node(self, o: bpy.types.Object = None, parent: Node = None) -> Node:
 
@@ -320,6 +323,10 @@ class SceneGraph():
                             name='Placeholder node for malformed '
                                  +f'mesh with no faces: {str(old_node)}')
                 old_node.teardown()
+
+            self.shader_utils.do_node(node)
+            assert node.vertex_shader
+            assert node.fragment_shader
 
         elif o.type == 'CAMERA':
             if o.data.type == 'PERSP':
