@@ -33,7 +33,7 @@ Do this by running the following command: ```git submodule update --init --recur
 Build the plugin libraries with CMake, e.g.:
 ```
 $mkdir build && cd build
-$cmake -DCMAKE_INSTALL_PREFIX=<path_to_install> -DBLENDER_ADDONS_PATH=<path_to_blender_addons_directory> ..
+$cmake -DBLENDER_ADDONS_PATH=<path_to_blender_addons_directory> ..
 $make install
 ```
 Since RAMSES comes with -Werror set by default, it is common for the build process to fail for very minor warnings. If this happens, unset ```ramses-sdk_WARNINGS_AS_ERRORS``` via cmake-gui or similar.
