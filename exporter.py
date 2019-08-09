@@ -188,6 +188,13 @@ class RamsesBlenderExporter():
             indices = scene.createIndexArray(ir_node.get_indices())
             vertices = scene.createVertexArray(3, ir_node.get_vertex_buffer())
             # TODO normals, texcoords...
+            # NOTE: normals, texcoords and other data are easily
+            #       found in intermediary_representation.MeshNode
+
+            # NOTE: current implementation is to require either
+            #       the default shaders or user-supplied ones.
+            assert ir_node.vertex_shader
+            assert ir_node.fragment_shader
 
             vertex_shader = ir_node.vertex_shader
             fragment_shader = ir_node.fragment_shader

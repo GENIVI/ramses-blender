@@ -42,13 +42,20 @@ class ShaderUtils():
         self.current_node = None
         self.shader_dir = ''
 
-    def do_node(self):
+    def do_node(self, node=None):
         # NOTE: if we want neither the default nor custom GLSL but instead want to derive
         # i.e.: shaders from material nodes or something similar, this is the place to change it
+        if node:
+            self.set_current_node(node)
 
+        assert self.current_node
         assert isinstance(self.current_node, intermediary_representation.MeshNode), 'Only meshes are supported for now'
+
         self.current_node.vertex_shader = self.current_vert_shader
         self.current_node.fragment_shader = self.current_frag_shader
+
+        if node:
+            self.clear_current_node()
         return self.current_node
 
     def _glsl_from_files(self, dir=None):
@@ -107,9 +114,17 @@ class ShaderUtils():
         return vertShader, fragShader
 
     def _config_from_file(self):
-        assert self.shader_dir
+        if not self.shader_dir:
+            log.debug(f"Can't read shader config for {str(self.current_node)}: path has not been set")
+            return
+
+        assert self.shader_dir # Sanity check if the above ever gets deleted
+
         # TODO: consider improving this
         config_paths = list(pathlib.Path(f'{self.shader_dir}').glob(pattern='*.config'))
+        assert len(config_paths) == 1 # NOTE: should we allow more than one config per node?
         config_path = config_paths[0]
 
-        return json.loads(config_path)
+        loaded_dict = json.loads(config_path)
+        assert loaded_dict
+        return loaded_dict
