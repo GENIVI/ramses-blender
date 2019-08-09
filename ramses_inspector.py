@@ -20,25 +20,41 @@ class RamsesInspector():
     """Inspector for assessing the results of generated RAMSES scenes"""
 
     def __init__(self,
-                 scene: ExportableScene):
+                 scene: ExportableScene,
+                 addon_dir: str = None):
 
         self.scene = scene
         self.viewer_process = None
+        self.addon_dir = addon_dir if addon_dir else \
+            str(pathlib.Path.cwd())
+
+        assert pathlib.Path(self.addon_dir).exists()
 
     def load_viewer(self, platform, block: bool = False):
         """Loads the RAMSES scene viewer for visual inspection of the
         generated scene"""
 
         assert isinstance(platform, str)
+        assert platform.islower() # Having uppercase chars is a common mistake
+                                  # Leads to viewer binary not being found
+        assert self.scene.output_path
+        assert self.scene.blender_scene.name
 
         self.close_viewer()
 
         resolution_x = self.scene.blender_scene.render.resolution_x
         resolution_y = self.scene.blender_scene.render.resolution_y
 
-        program_args = f'-s {self.scene.output_path}{self.scene.blender_scene.name} -x -w {resolution_x} -h {resolution_y}'
+        scene_full_path = pathlib.Path(self.scene.output_path).joinpath(f'{self.scene.blender_scene.name}.ramses')
+        assert scene_full_path.exists(), f'Wrong scene path: {str(scene_full_path)}'
+
+        program_args = f"-s {str(scene_full_path).replace('.ramses','')} -x -w {resolution_x} -h {resolution_y}"
         program = f'ramses-scene-viewer-{platform}'
-        cmd = f'bin/{program} {program_args}'
+
+        program_full_path = pathlib.Path(self.addon_dir).joinpath('bin').joinpath(program)
+        assert program_full_path.exists(), f'Wrong viewer path: {str(program_full_path)}'
+
+        cmd = f'{str(program_full_path)} {program_args}'
 
         log.debug(f'Running viewer. Command is: {cmd}\n')
 

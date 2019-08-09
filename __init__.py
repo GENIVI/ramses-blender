@@ -108,14 +108,14 @@ class RamsesExportOperator(bpy.types.Operator):
         for exportable_scene in exporter.get_exportable_scenes():
 
             exportable_scene.set_output_dir(self.directory)
-            inspector = RamsesInspector(exportable_scene)
-            inspector.load_viewer(self.platform)
+            inspector = RamsesInspector(exportable_scene, addon_dir=utils.get_addon_path())
 
             if not exportable_scene.is_valid():
                 validation_report = exportable_scene.get_validation_report()
                 raise RuntimeError(validation_report)
 
             exportable_scene.save()
+            inspector.load_viewer(platform=self.platform)
 
         return {'FINISHED'}
 

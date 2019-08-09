@@ -49,10 +49,13 @@ class TestRamsesBlenderExporter(ExporterTestBase, unittest.TestCase):
         exporter.build_from_extracted_representations()
 
         for exportable_scene in exporter.get_exportable_scenes():
-            inspector = ramses_export.ramses_inspector.RamsesInspector(exportable_scene)
-            os.chdir(self.addon_path)
+            exportable_scene.set_output_dir(self.working_dir)
+            exportable_scene.save() # Can't see what we do not save
+            inspector = ramses_export.ramses_inspector.RamsesInspector(exportable_scene, addon_dir=self.addon_path)
             inspector.load_viewer(self.platform)
 
             if not exportable_scene.is_valid():
                 validation_report = exportable_scene.get_validation_report()
                 raise RuntimeError(validation_report)
+
+            inspector.close_viewer()

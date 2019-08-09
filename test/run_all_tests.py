@@ -90,7 +90,8 @@ def main():
                 'script'        : os.path.join(current_path, 'run_unit_tests.py'),
                 'test_scene'    : os.path.join(current_path, 'test_scenes/cube.blend'),
                 'expected_image': '',
-                'expected_output_files': 1, # The debug log will be generated
+                # NOTE: need to save a scene to see it in the viewer
+                'expected_output_files': 3, # debug.txt, Scene.ramses, Scene.ramres.
             },
         'export_cube' :
             {

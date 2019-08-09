@@ -11,6 +11,7 @@ import bpy
 import argparse
 import subprocess
 import shutil
+import pathlib
 
 from ramses_export import debug_utils
 from ramses_export.exporter import RamsesBlenderExporter
@@ -38,7 +39,7 @@ class ExporterTestBase():
         args_for_test_only = sys.argv[index_of_double_dash + 1:] if index_of_double_dash != -1 else []
         args = parser.parse_args(args_for_test_only)
         self.working_dir = args.working_dir
-        self.platform = args.platform
+        self.platform = args.platform.lower()
         self.addon_path = args.addon_path
         self.generate_expected_screenshots = args.generate_expected_screenshots
 
@@ -74,6 +75,7 @@ class ExporterTestBase():
         if open_viewer or take_screenshot:
             # both are needed to pop up the scene viewer
             assert platform
+            assert platform.islower() # A common source of errors
             assert addon_path
 
         if generate_expected_screenshots:
@@ -103,12 +105,18 @@ class ExporterTestBase():
                     file.write(exportable_scene.ramses_scene.toText())
 
             if open_viewer:
-                program = f'ramses-scene-viewer-{platform}'
-                cmd = [f'{addon_path}/bin/{program}',
-                    '-s', f'{exportable_scene.output_path}/{exportable_scene.blender_scene.name}']
+                scene_full_path = pathlib.Path(exportable_scene.output_path).joinpath(f'{exportable_scene.blender_scene.name}.ramses')
+                assert scene_full_path.exists(), f'Wrong scene path: {str(scene_full_path)}'
 
-                viewer_process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                viewer_process.wait()
+                program_args = f"-s {str(scene_full_path).replace('.ramses','')} -w {screenshot_resolution_x} -h {screenshot_resolution_y}"
+                program = f'ramses-scene-viewer-{platform}'
+
+                program_full_path = pathlib.Path(self.addon_path).joinpath('bin').joinpath(program)
+                assert program_full_path.exists(), f'Wrong viewer path: {str(program_full_path)}'
+
+                cmd = f'{str(program_full_path)} {program_args}'
+
+                viewer_process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
                 out, err = viewer_process.communicate()
 
                 if err:
@@ -118,14 +126,19 @@ class ExporterTestBase():
                 screenshot_path = os.path.join(output_dir, f'screenshot.png')
                 screenshot_resolution_x = exportable_scene.blender_scene.render.resolution_x
                 screenshot_resolution_y = exportable_scene.blender_scene.render.resolution_y
-                program = f'ramses-scene-viewer-{platform}'
-                cmd = [f'{addon_path}/bin/{program}',
-                    '-s', f'{exportable_scene.output_path}/{exportable_scene.blender_scene.name}',
-                    '-x', str(screenshot_path),
-                    '-xw', str(screenshot_resolution_x),
-                    '-xh', str(screenshot_resolution_y)]
 
-                viewer_process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                scene_full_path = pathlib.Path(exportable_scene.output_path).joinpath(f'{exportable_scene.blender_scene.name}.ramses')
+                assert scene_full_path.exists(), f'Wrong scene path: {str(scene_full_path)}'
+
+                program_args = f"-s {str(scene_full_path).replace('.ramses','')} -x {str(screenshot_path)} -xw {str(screenshot_resolution_x)} -xh {str(screenshot_resolution_y)}"
+                program = f'ramses-scene-viewer-{platform}'
+
+                program_full_path = pathlib.Path(self.addon_path).joinpath('bin').joinpath(program)
+                assert program_full_path.exists(), f'Wrong viewer path: {str(program_full_path)}'
+
+                cmd = f'{str(program_full_path)} {program_args}'
+
+                viewer_process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
                 out, err = viewer_process.communicate()
 
                 if generate_expected_screenshots:
@@ -141,5 +154,7 @@ class ExporterTestBase():
                     raise RuntimeError(viewer_process.returncode)
                 if err:
                     raise RuntimeError(err)
+
+                viewer_process.terminate()
 
         return exportable_scenes
