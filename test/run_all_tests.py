@@ -101,6 +101,20 @@ def main():
                 # TODO check if a more sophisticated check is needed
                 'expected_output_files': 5,
             },
+        'export_cube_custom_GLSL_single_cube' :
+            {
+                'script'        : os.path.join(current_path, 'export_cube_custom_GLSL_single_cube.py'),
+                'test_scene'    : os.path.join(current_path, 'test_scenes/cube_custom_GLSL.blend'),
+                'expected_image': os.path.join(current_path, 'expected_results/export_cube_custom_GLSL_single_cube.png'),
+                'expected_output_files': 5,
+            },
+        'export_cube_custom_GLSL_both_cubes' :
+            {
+                'script'        : os.path.join(current_path, 'export_cube_custom_GLSL_both_cubes.py'),
+                'test_scene'    : os.path.join(current_path, 'test_scenes/cube_custom_GLSL.blend'),
+                'expected_image': os.path.join(current_path, 'expected_results/export_cube_custom_GLSL_both_cubes.png'),
+                'expected_output_files': 5,
+            },
         'export_cube_scaledX' :
             {
                 'script'        : os.path.join(current_path, 'export_cube_scaledX.py'),

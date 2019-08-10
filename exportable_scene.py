@@ -36,6 +36,10 @@ class ExportableScene():
     def blender_scene(self):
         return self._blender_scene_representation.scene
 
+    @property
+    def scene_representation(self):
+        return self._blender_scene_representation
+
     def save(self):
         """Persists the RAMSES scene."""
 
