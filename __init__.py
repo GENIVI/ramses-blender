@@ -140,10 +140,13 @@ class RamsesExportOperator(bpy.types.Operator):
 
     def glsl_list_init(self):
         # Populate the GLSL UI list as soon as the fileselect window opens
-        for mesh in bpy.data.meshes:
-            mesh_in_list = self.mesh_list.add()
-            mesh_in_list.name = mesh.name
-            mesh_in_list.mesh_GLSL_dir = ''
+        for _object in bpy.data.objects:
+            # NOTE: we want mesh objects, not mesh datablocks
+            #       in bpy.data.meshes
+            if _object.type == 'MESH':
+                mesh_in_list = self.mesh_list.add()
+                mesh_in_list.name = _object.name
+                mesh_in_list.mesh_GLSL_dir = ''
 
     def get_CustomParams(self):
         """Extra parameters we might set that are not a part of the Blender scene itself"""
@@ -153,7 +156,8 @@ class RamsesExportOperator(bpy.types.Operator):
             # The Blender UI will not allow two objects with the same name so maybe
             # it is safe to use it as an index
             assert list_item.name
-            assert bpy.data.meshes[list_item.name]
+            # NOTE: we want mesh objects, not mesh datablocks in bpy.data.meshes
+            assert bpy.data.objects[list_item.name]
 
             custom_params = utils.CustomParameters()
             if list_item.mesh_GLSL_dir:
