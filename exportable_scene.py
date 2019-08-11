@@ -16,10 +16,10 @@ class ExportableScene():
     def __init__(self,
                  ramses,
                  ramses_scene,
-                 blender_scene):
+                 blender_scene_representation):
         self.ramses = ramses
-        self.ramses_scene = ramses_scene
-        self.blender_scene = blender_scene
+        self._ramses_scene = ramses_scene
+        self._blender_scene_representation = blender_scene_representation
 
         # Paths are set at a later stage
         self.output_path = None
@@ -27,6 +27,14 @@ class ExportableScene():
         self.ir_groups = []
         self.groups = {}
         self.passes = {}
+
+    @property
+    def ramses_scene(self):
+        return self._ramses_scene
+
+    @property
+    def blender_scene(self):
+        return self._blender_scene_representation.scene
 
     def save(self):
         """Persists the RAMSES scene."""

@@ -84,7 +84,7 @@ class RamsesBlenderExporter():
 
         exportable_scene = ExportableScene(self.ramses,
                                            ramses_scene,
-                                           scene_representation.scene)
+                                           scene_representation)
         exportable_scene.groups = self._build_ramses_render_groups(ramses_scene, ir_groups)
         exportable_scene.passes = self._build_ramses_render_passes(ramses_scene, ir_root)
         exportable_scene.ir_groups = ir_groups
