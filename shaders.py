@@ -32,7 +32,7 @@ class ShaderUtils():
         assert node
         self.current_node = node
         self.shader_dir = shader_dir if shader_dir else ''
-        self.current_vert_shader, self.current_frag_shader = self._glsl_from_files() if \
+        self.current_vert_shader, self.current_frag_shader = self._glsl_from_files(self.shader_dir) if \
             self.shader_dir else self._glsl_default()
         self.config = self._config_from_file()
         assert self.current_vert_shader
@@ -125,6 +125,10 @@ class ShaderUtils():
         assert len(config_paths) == 1 # NOTE: should we allow more than one config per node?
         config_path = config_paths[0]
 
-        loaded_dict = json.loads(config_path)
-        assert loaded_dict
+        config_str = ''
+        with open(config_path, 'r') as f:
+            config_str = f.read()
+
+        loaded_dict = json.loads(config_str) if config_str else {}
+        assert isinstance(loaded_dict, dict)
         return loaded_dict
