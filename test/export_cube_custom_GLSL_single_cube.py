@@ -40,8 +40,9 @@ class ExportCubeCustomGLSLTest(ExporterTestBase, unittest.TestCase):
         # Setting up this field will make the addon look into the
         # directory for .verg/.frag/.config files
         custom_params.shader_dir = str(pathlib.Path(f'{self.addon_path}/{shader_library_dir}'))
+        custom_params.render_technique = 'red'
 
-        params['CubeRed'] = custom_params
+        params['CubeRed'] = custom_params # The other cube does not have this and gets rendered with default shaders
 
         self.maxDiff = None # Display diff if the strings do not match
 

@@ -1,0 +1,21 @@
+{
+    "techniques": {
+        "default": {
+            "shaders": {
+                "vertex": "default",
+                "fragment": "default"
+            }
+        },
+        "red": {
+            "shaders": {
+                "vertex": "translated",
+                "fragment": "red"
+            }
+        }
+    },
+    "vertexformat": {
+        "position": "a_position",
+        "normal": "a_normal",
+        "texcoord": "a_texcoord"
+    }
+}

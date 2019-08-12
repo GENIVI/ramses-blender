@@ -81,6 +81,9 @@ class Mesh_ListItem(bpy.types.PropertyGroup):
     mesh_GLSL_dir: bpy.props.StringProperty(name="Mesh GLSL directory",
                                             description="The directory to look for custom GLSL shaders for the selected mesh, leave it blank to disable this",
                                             default='')
+    mesh_render_technique: bpy.props.StringProperty(name="Mesh render technique",
+                                                    description='A technique describing the effect used to render the geometry.',
+                                                    default='')
 
 
 class MeshUIList(UIList):
@@ -147,6 +150,7 @@ class RamsesExportOperator(bpy.types.Operator):
                 mesh_in_list = self.mesh_list.add()
                 mesh_in_list.name = _object.name
                 mesh_in_list.mesh_GLSL_dir = ''
+                mesh_in_list.mesh_render_technique = ''
 
     def get_CustomParams(self):
         """Extra parameters we might set that are not a part of the Blender scene itself"""
@@ -163,6 +167,7 @@ class RamsesExportOperator(bpy.types.Operator):
             if list_item.mesh_GLSL_dir:
                 # If set in the UI, set it also in the corresponding blender object
                 custom_params.shader_dir = list_item.mesh_GLSL_dir
+                custom_params.render_technique = list_item.mesh_render_technique
 
             ret[list_item.name] = custom_params
         return ret
@@ -225,6 +230,8 @@ class RamsesExportOperator(bpy.types.Operator):
             item = self.mesh_list[self.mesh_list_index]
             row = layout.row()
             row.prop(item, "mesh_GLSL_dir")
+            row = layout.row()
+            row.prop(item, "mesh_render_technique")
 
     # ------- User Interface --------------------
 

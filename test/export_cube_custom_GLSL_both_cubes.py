@@ -36,13 +36,16 @@ class ExportCubeCustomGLSLTest(ExporterTestBase, unittest.TestCase):
         params = {}
         shader_library_dir = 'test/shader_library'
 
-        custom_params = utils.CustomParameters()
-        # Setting up this field will make the addon look into the
-        # directory for .verg/.frag/.config files
-        custom_params.shader_dir = str(pathlib.Path(f'{self.addon_path}/{shader_library_dir}'))
+        custom_params_technique_default = utils.CustomParameters()
+        custom_params_technique_default.shader_dir = str(pathlib.Path(f'{self.addon_path}/{shader_library_dir}'))
+        custom_params_technique_default.render_technique = 'default' # This cube is explicitly told to render with the default shaders
 
-        params['CubeRed'] = custom_params
-        params['CubeWhite'] = custom_params
+        custom_params_technique_red = utils.CustomParameters()
+        custom_params_technique_red.shader_dir = str(pathlib.Path(f'{self.addon_path}/{shader_library_dir}'))
+        custom_params_technique_red.render_technique = 'red' # Render the cube red and translated
+
+        params['CubeRed'] = custom_params_technique_red
+        params['CubeWhite'] = custom_params_technique_default
 
         self.maxDiff = None # Display diff if the strings do not match
 
@@ -57,7 +60,7 @@ class ExportCubeCustomGLSLTest(ExporterTestBase, unittest.TestCase):
             self.assertNotEqual(cube_white_ir.vertex_shader, default_vertex_shader)
             self.assertNotEqual(cube_white_ir.fragment_shader, default_fragment_shader)
 
-            custom_vertex_shader = """#version 300 es
+            custom_vertex_shader_red = """#version 300 es
 
 in vec3 a_position;
 uniform highp mat4 u_ModelMatrix;
@@ -76,7 +79,20 @@ void main()
 \tgl_Position = u_ProjectionMatrix * u_ViewMatrix * u_ModelMatrix * vec4(new_pos.xyz, 1.0);
 }
 """
-            custom_fragment_shader = """#version 300 es
+            custom_vertex_shader_default = """#version 300 es
+
+in vec3 a_position;
+uniform highp mat4 u_ModelMatrix;
+uniform highp mat4 u_ViewMatrix;
+uniform highp mat4 u_ProjectionMatrix;
+
+void main()
+{
+\tgl_Position = u_ProjectionMatrix * u_ViewMatrix * u_ModelMatrix * vec4(a_position.xyz, 1.0);
+}
+
+"""
+            custom_fragment_shader_red = """#version 300 es
 
 precision mediump float;
 
@@ -88,11 +104,24 @@ void main(void)
 }
 
 """
-            self.assertEqual(cube_white_ir.vertex_shader, custom_vertex_shader, msg="GLSL differs between node and file")
-            self.assertEqual(cube_white_ir.fragment_shader, custom_fragment_shader, msg="GLSL differs between node and file")
+            custom_fragment_shader_default = """#version 300 es
 
-            self.assertEqual(cube_red_ir.vertex_shader, custom_vertex_shader, msg="GLSL differs between node and file")
-            self.assertEqual(cube_red_ir.fragment_shader, custom_fragment_shader, msg="GLSL differs between node and file")
+precision mediump float;
+
+out vec4 FragColor;
+
+void main(void)
+{
+\tFragColor = vec4(1.0, 1.0, 1.0, 1.0);
+}
+"""
+            # Using custom shaders that happen to be equal to the default ones
+            self.assertEqual(cube_white_ir.vertex_shader, custom_vertex_shader_default, msg="GLSL differs between node and file")
+            self.assertEqual(cube_white_ir.fragment_shader, custom_fragment_shader_default, msg="GLSL differs between node and file")
+
+            # Using custom shaders that happen to translate the cube and paint it red
+            self.assertEqual(cube_red_ir.vertex_shader, custom_vertex_shader_red, msg="GLSL differs between node and file")
+            self.assertEqual(cube_red_ir.fragment_shader, custom_fragment_shader_red, msg="GLSL differs between node and file")
 
 
 if __name__ == '__main__':

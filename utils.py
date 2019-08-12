@@ -20,3 +20,4 @@ class CustomParameters():
     """Extra parameters we might set that are not a part of the Blender scene itself"""
     def __init__(self):
         self.shader_dir = ''
+        self.render_technique = ''

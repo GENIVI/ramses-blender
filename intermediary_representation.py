@@ -62,11 +62,11 @@ class SceneRepresentation():
             if params.shader_dir:
                 # Use custom GLSL code for node
                 assert isinstance(node, MeshNode)
-                self._Node_doCustomShaders(node, params.shader_dir)
+                self._Node_doCustomShaders(node, params.shader_dir, params.render_technique)
 
-    def _Node_doCustomShaders(self, node: Node, shader_dir: str):
+    def _Node_doCustomShaders(self, node: Node, shader_dir: str, render_technique: str):
         assert node
-        self.shader_utils.set_current_node(node, shader_dir)
+        self.shader_utils.set_current_node(node, shader_dir, technique=render_technique)
         self.shader_utils.do_node()
         self.shader_utils.clear_current_node()
         assert node.vertex_shader
