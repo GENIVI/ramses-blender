@@ -59,6 +59,7 @@ class ShaderUtils():
 
         self.current_node.vertex_shader = self.current_vert_shader
         self.current_node.fragment_shader = self.current_frag_shader
+        self.current_node.vertexformat = self.config['vertexformat']
 
         if node:
             self.clear_current_node()
@@ -196,5 +197,5 @@ class ShaderUtils():
         config = {}
         config['techniques'] = {'default': {}}
         config['techniques']['default']['shaders'] = {'vertex':'', 'fragment':''}
-        config['vertexformat'] = {'position':'', 'normal':'', 'texcoord':''}
+        config['vertexformat'] = {'position':'a_position', 'normal':'', 'texcoord':''}
         return config

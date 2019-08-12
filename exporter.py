@@ -204,7 +204,7 @@ class RamsesBlenderExporter():
             appearance = scene.createAppearance(ramses_effect)
 
             geometry.setIndexBuffer(indices)
-            geometry.setVertexBuffer("a_position", vertices)
+            geometry.setVertexBuffer(ir_node.vertexformat['position'], vertices)
 
             ramses_mesh_node.setAppearance(appearance)
             ramses_mesh_node.setGeometry(geometry)

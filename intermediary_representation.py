@@ -476,6 +476,7 @@ class MeshNode(Node):
     def __init__(self, blender_object: bpy.types.Object):
         super().__init__(blender_object, name = blender_object.name_full)
         self.mesh = None
+        self.vertexformat = {}
         self.init_memory_mesh()
 
     def teardown(self):
