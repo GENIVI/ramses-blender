@@ -42,12 +42,12 @@ file(GLOB test_files
     test/*.py
 )
 
-file(GLOB shader_files
-    *.frag
-    *.vert
+file(GLOB test_shader_library
+    test/shader_library/*
 )
 
 install(FILES ${src_files} DESTINATION ${BLENDER_ADDONS_PATH}/${project_name}/)
 install(FILES ${test_files} DESTINATION ${BLENDER_ADDONS_PATH}/${project_name}/test)
+install(FILES ${test_shader_library} DESTINATION ${BLENDER_ADDONS_PATH}/${project_name}/test/shader_library)
 install(FILES ${shader_files} DESTINATION ${BLENDER_ADDONS_PATH}/${project_name}/)
 
