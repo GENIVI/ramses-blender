@@ -57,6 +57,61 @@ class RamsesBlenderExporter():
             ramses_scene = self.build_ramses_scene(representation)
             self.exportable_scenes.append(ramses_scene)
 
+    def do_passes(self, scene_representation: SceneRepresentation, ramses_scene: RamsesPython.Scene):
+        for layer in scene_representation.layers:
+            render_pass = ramses_scene.createRenderPass(f'RenderPass for {layer.name}')
+
+            scene_camera_blender_object = scene_representation.scene.camera
+            scene_camera_ir = scene_representation.graph.find_from_blender_object(scene_camera_blender_object)[0]
+
+            camera = RamsesPython.toCamera(ramses_scene.findObjectByName(scene_camera_ir.name))
+            render_pass.setCamera(camera)
+
+            self.do_groups(scene_representation, ramses_scene, render_pass)
+
+    def do_groups(self,
+                  scene_representation: SceneRepresentation,
+                  ramses_scene: RamsesPython.Scene,
+                  ramses_pass: RamsesPython.RenderPass):
+
+        def do_group(scene_representation, ramses_scene, ramses_pass, current_node):
+            assert isinstance(current_node, ViewLayerNode) or isinstance(current_node, LayerCollectionNode)
+
+            current_group = ramses_scene.createRenderGroup(f'RenderGroup for {current_node.name}')
+            render_order = 0
+            empty = True
+
+            for child in current_node.children:
+
+                if isinstance(child, MeshNode):
+                    ramses_object = RamsesPython.toMesh(ramses_scene.findObjectByName(child.name))
+                    assert ramses_object
+                    current_group.addMesh(ramses_object, render_order)
+                    render_order += 1
+
+                    empty = False
+
+                elif isinstance(child, LayerCollectionNode):
+                    child_group = do_group(scene_representation, ramses_scene, ramses_pass, current_node=child)
+                    if child_group:
+                        empty = False
+                        current_group.addRenderGroup(child_group, render_order)
+                        render_order += 1
+
+            if empty:
+                ramses_scene.destroy(current_group)
+                current_group = None
+
+            return current_group
+
+        for layer in scene_representation.layers:
+            order_within_pass = 0
+            group = do_group(scene_representation, ramses_scene, ramses_pass, current_node=layer)
+            if group:
+                # Do not fail if we do not find meshes (i.e. blank scene, empty collection, etc)
+                ramses_pass.addRenderGroup(group, order_within_pass)
+                order_within_pass += 1
+
     def build_ramses_scene(self,
                            scene_representation: SceneRepresentation) -> ExportableScene:
         """Builds a RAMSES scene out of the available scene \
@@ -81,14 +136,10 @@ class RamsesBlenderExporter():
         ramses_scene = self.ramses.createScene("test scene")
 
         ir_root = scene_representation.graph.root
-        ir_groups = scene_representation.graph.as_groups()
 
         exportable_scene = ExportableScene(self.ramses,
                                            ramses_scene,
                                            scene_representation)
-        exportable_scene.groups = self._build_ramses_render_groups(ramses_scene, ir_groups)
-        exportable_scene.passes = self._build_ramses_render_passes(ramses_scene, ir_root)
-        exportable_scene.ir_groups = ir_groups
 
         log.debug(\
             f'Intermediary representation consists of:\n{str(scene_representation.graph)}')
@@ -98,10 +149,11 @@ class RamsesBlenderExporter():
                                                      parent=None,
                                                      exportable_scene=exportable_scene)
 
+        self.do_passes(scene_representation, ramses_scene)
+
         log.debug(f'Successfully built RAMSES Scenegraph: {str(ramses_root)}. Tearing down the IR graph')
         scene_representation.teardown()
 
-        exportable_scene.bind_groups_to_passes()
 
         validation_report = exportable_scene.get_validation_report()
         log.debug(f"Validation report for scene {str(exportable_scene.ramses_scene)}:\n{validation_report}")
@@ -209,9 +261,6 @@ class RamsesBlenderExporter():
             ramses_mesh_node.setAppearance(appearance)
             ramses_mesh_node.setGeometry(geometry)
 
-            if exportable_scene:
-                self._add_to_render_groups(exportable_scene, ir_node, ramses_mesh_node)
-
             ret.append(ramses_mesh_node)
             ramses_node = ramses_mesh_node
 
@@ -224,9 +273,6 @@ class RamsesBlenderExporter():
             ramses_camera_node = scene.createPerspectiveCamera(name)
             ramses_camera_node.setViewport(0, 0, int(ir_node.width), int(ir_node.height))
             ramses_camera_node.setFrustumFromFoV(fov, aspect_ratio, z_near, z_far)
-
-            if exportable_scene:
-                self._add_to_render_passes(exportable_scene, ir_node, ramses_camera_node)
 
             ret.append(ramses_camera_node)
             ramses_node = ramses_camera_node
@@ -249,50 +295,7 @@ class RamsesBlenderExporter():
         return ret
 
 
-    def _build_ramses_render_groups(self,
-                                    ramses_scene: RamsesPython.Scene,
-                                    ir_groups: List[Node]) -> List[RamsesPython.RenderGroup]:
-        """Builds a RAMSES RenderGroup for each GroupNode in the IR.
 
-        Arguments:
-            ramses_scene {RamsesPython.Scene} -- The RAMSES Scene
-            ir_groups {List[Node]} -- A list of IR Group Nodes.
-
-        Returns:
-            List[RamsesPython.RenderGroup] -- A list of RAMSES RenderGroups for each GroupNode in the IR.
-        """
-        return {group.name : ramses_scene.createRenderGroup(group.name) for group in ir_groups}
-
-    def _build_ramses_render_passes(self,
-                                    ramses_scene: RamsesPython.Scene,
-                                    ir_root: Node) -> List[RamsesPython.RenderPass]:
-        """Builds a RAMSES RenderPass for each CameraNode in the scene.
-
-        Arguments:
-            ramses_scene {RamsesPython.Scene} -- [description]
-            ir_root {Node} -- [description]
-
-        Returns:
-            List[RamsesPython.RenderPass] -- [description]
-        """
-        ret = {}
-
-        for ir_node in ir_root.traverse():
-            if isinstance(ir_node, CameraNode):
-                ret[ir_node.name] = ramses_scene.createRenderPass(f'Render pass for {ir_node.name}')
-
-        return ret
-
-    def _add_to_render_groups(self, exportable_scene, ir_node, ramses_mesh_node):
-        for ir_group in exportable_scene.ir_groups:
-            if ir_group.contains(ir_node):
-                #TODO: render order
-                exportable_scene.groups[ir_group.name].addMesh(ramses_mesh_node, 0)
-
-    def _add_to_render_passes(self, exportable_scene, ir_camera_node, ramses_camera_node):
-        for ir_group in exportable_scene.ir_groups:
-            if ir_group.contains(ir_camera_node):
-                exportable_scene.passes[ir_camera_node.name].setCamera(ramses_camera_node)
 
     def _resolve_rotation_order(self,
                                 ramses_scene: RamsesPython.Scene,
