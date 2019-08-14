@@ -27,7 +27,10 @@ class SceneRepresentation():
     RAMSES.
     """
 
-    def __init__(self, scene: bpy.types.Scene, custom_params: Dict[str, utils.CustomParameters]=None):
+    def __init__(self,
+                 scene: bpy.types.Scene,
+                 custom_params: Dict[str, utils.CustomParameters] = None,
+                 evaluate: bool = False):
         self.scene = scene
         self.graph = SceneGraph(scene) # Entire scene
         self.layers = [] # A graph for every layer. We can map these to RenderGroups
@@ -35,6 +38,12 @@ class SceneRepresentation():
             custom_params = {}
         self.custom_params = custom_params
         self.shader_utils = shaders.ShaderUtils()
+        self.evaluate = evaluate
+
+    @property
+    def camera(self):
+        camera = self.scene.camera
+        return camera
 
     def build_ir(self):
         """Builds the intermediary representation from the Blender
@@ -43,14 +52,18 @@ class SceneRepresentation():
         for o in self.scene.objects:
             self.graph.add_node(o)
 
-        self.do_view_layers()
+        self.do_view_layers(self.evaluate)
 
         self._doCustomParams_ForSceneGraph(self.custom_params)
         self._doCustomParams_ForLayers(self.custom_params)
 
-    def do_view_layers(self):
+    def do_view_layers(self, evaluate: bool = False):
         for view_layer in self.scene.view_layers:
            layer_node = ViewLayerNode(self.graph, view_layer)
+
+           if evaluate:
+               layer_node.evaluate()
+
            self.layers.append(layer_node)
 
     def teardown(self):
@@ -282,6 +295,10 @@ class Node():
 
         for child in self.children:
             yield from child.traverse()
+
+    def update(self):
+        """Update this node when previous access to data or operators changes it.
+        Should be overridden in derived types"""
 
     def __str__(self):
         return f'IRNode of type: {type(self)} and name: {self.name}'
@@ -577,6 +594,9 @@ class MeshNode(Node):
         print(self.get_faces())
         print(self.get_indices())
 
+    def update(self):
+        self.mesh.free()
+        self.init_memory_mesh()
 
 class CameraNode(Node):
     def __init__(self, blender_object: bpy.types.Object):
@@ -779,6 +799,7 @@ class ViewLayerNode(Node):
         # TODO: plenty of other interesting options in this bpy_struct,
         # maybe we could use it some more?
 
+        view_layer.update()
         self.scene_graph = scene_graph
         self.view_layer = view_layer
         self.use = view_layer.use
@@ -800,6 +821,20 @@ class ViewLayerNode(Node):
             graph.add_node(o)
 
         self.children.extend(graph.root.children)
+
+    def evaluate(self):
+        """Evaluates the ViewLayer and its hierarchy, applying modifiers and deformations"""
+        # Replace the object by the evaluated version,
+        # i.e. with modifiers and deformations applied
+        # See https://blender.stackexchange.com/questions/146559/how-do-i-get-a-mesh-data-block-with-modifiers-and-shape-keys-applied-in-blender
+        # See https://blender.stackexchange.com/questions/140789/what-is-the-replacement-for-scene-update
+        nodes = [node for node in self.traverse()]
+        assert nodes
+
+        for node in nodes:
+            if node.blender_object:
+                node.blender_object = node.blender_object.evaluated_get(self.depsgraph)
+            node.update()
 
 
 class LayerCollectionNode(Node):

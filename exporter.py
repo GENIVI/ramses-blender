@@ -59,9 +59,11 @@ class RamsesBlenderExporter():
 
     def do_passes(self, scene_representation: SceneRepresentation, ramses_scene: RamsesPython.Scene):
         for layer in scene_representation.layers:
+            assert isinstance(layer, ViewLayerNode)
+
             render_pass = ramses_scene.createRenderPass(f'RenderPass for {layer.name}')
 
-            scene_camera_blender_object = scene_representation.scene.camera
+            scene_camera_blender_object = scene_representation.camera
             scene_camera_ir = scene_representation.graph.find_from_blender_object(scene_camera_blender_object)[0]
 
             camera = RamsesPython.toCamera(ramses_scene.findObjectByName(scene_camera_ir.name))
@@ -84,9 +86,15 @@ class RamsesBlenderExporter():
             for child in current_node.children:
 
                 if isinstance(child, MeshNode):
-                    ramses_object = RamsesPython.toMesh(ramses_scene.findObjectByName(child.name))
-                    assert ramses_object
-                    current_group.addMesh(ramses_object, render_order)
+                    # NOTE: I guess evaluating objects might change them, so we should maybe
+                    #       create new objects in RAMSES (i.e. by calling translate())
+                    translation_result = self.translate(ramses_scene, child)
+                    assert translation_result
+
+                    ramses_mesh = RamsesPython.toMesh(ramses_scene.findObjectByName(child.name))
+                    assert ramses_mesh
+
+                    current_group.addMesh(ramses_mesh, render_order)
                     render_order += 1
 
                     empty = False
