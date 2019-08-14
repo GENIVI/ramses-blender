@@ -29,7 +29,8 @@ class SceneRepresentation():
 
     def __init__(self, scene: bpy.types.Scene, custom_params: Dict[str, utils.CustomParameters]=None):
         self.scene = scene
-        self.graph = SceneGraph(scene)
+        self.graph = SceneGraph(scene) # Entire scene
+        self.layers = [] # A graph for every layer. We can map these to RenderGroups
         if not custom_params:
             custom_params = {}
         self.custom_params = custom_params
@@ -42,15 +43,23 @@ class SceneRepresentation():
         for o in self.scene.objects:
             self.graph.add_node(o)
 
-        self._doCustomParams(self.custom_params)
+        self.do_view_layers()
+
+        self._doCustomParams_ForSceneGraph(self.custom_params)
+        self._doCustomParams_ForLayers(self.custom_params)
+
+    def do_view_layers(self):
+        for view_layer in self.scene.view_layers:
+           layer_node = ViewLayerNode(self.graph, view_layer)
+           self.layers.append(layer_node)
 
     def teardown(self):
         self.graph.teardown()
 
-    def _doCustomParams(self, custom_params):
+    def _doCustomParams(self, custom_params, graph):
         for scene_object_name, params in custom_params.items():
             blender_object = self.scene.objects[scene_object_name]
-            node = self.graph.find_from_blender_object(blender_object)
+            node = graph.find_from_blender_object(blender_object)
 
             if not node:
                 # Malformed meshes or other issues
@@ -63,6 +72,13 @@ class SceneRepresentation():
                 # Use custom GLSL code for node
                 assert isinstance(node, MeshNode)
                 self._Node_doCustomShaders(node, params.shader_dir, params.render_technique)
+
+    def _doCustomParams_ForLayers(self, custom_params):
+        for layer_node in self.layers:
+            self._doCustomParams(custom_params, layer_node)
+
+    def _doCustomParams_ForSceneGraph(self, custom_params):
+        self._doCustomParams(custom_params, self.graph)
 
     def _Node_doCustomShaders(self, node: Node, shader_dir: str, render_technique: str):
         assert node
@@ -752,27 +768,60 @@ class AreaLightNode(LightNode):
         self.size_y=blender_object.data.size_y
 
 
-class GroupNode(Node):
-    """A node that represents a group of nodes. Should only be created
-    after the full scene graph is created so the it can find any
-    object it references in the scene graph"""
+class ViewLayerNode(Node):
+    """A node that represents a Blender View Layer.
+    Besides splitting up a render into multiple layers for compositing,
+    they can now also be used as multiple views and variations of a scene for editing"""
 
     def __init__(self, scene_graph: SceneGraph, view_layer: bpy.types.ViewLayer):
 
-        super().__init__(name=f'GroupNode for {view_layer.name}')
-
-        """While most nodes were defined with a pointer to their parent,
-        groups hold pointers to their children and do not change the
-        existing hierarchy"""
+        super().__init__(name=f'{view_layer.name}')
         # TODO: plenty of other interesting options in this bpy_struct,
         # maybe we could use it some more?
 
         self.scene_graph = scene_graph
         self.view_layer = view_layer
         self.use = view_layer.use
-        self.children = []
+        # Root of collections hierarchy of this view layer
+        # Its ‘collection’ pointer property is the same as the scene’s master collection
+        self.layer_collection = view_layer.layer_collection
+        # The dependency graph to evaluate objects against
+        self.depsgraph = view_layer.depsgraph
 
-        for blender_object in self.view_layer.objects:
-            ir_nodes = self.scene_graph.find_from_blender_object(blender_object)
-            assert len(ir_nodes) == 1
-            self.children.extend(ir_nodes)
+        for child_collection in self.view_layer.layer_collection.children:
+            # A view layer might have children collections
+            if not child_collection.exclude:
+                node = LayerCollectionNode(self.scene_graph, child_collection)
+                self.children.append(node)
+
+        # A view layer might have objects of its own
+        graph = SceneGraph(self.scene_graph.scene)
+        for o in self.layer_collection.collection.objects:
+            graph.add_node(o)
+
+        self.children.extend(graph.root.children)
+
+
+class LayerCollectionNode(Node):
+    """A node that represents a wrapper over Blender Collections"""
+
+    def __init__(self, scene_graph: SceneGraph, layer_collection: bpy.types.LayerCollection):
+
+        super().__init__(name=f'{layer_collection.name}')
+        self.scene_graph = scene_graph
+        self.layer_collection = layer_collection
+        self.collection = self.layer_collection.collection
+        self.exclude = self.layer_collection.exclude
+        self.is_visible = self.layer_collection.is_visible
+
+        for child_layer_collection in self.layer_collection.children:
+            # A collection might have nested collections
+            if not child_layer_collection.exclude:
+                self.children.append(LayerCollectionNode(self.scene_graph, child_layer_collection))
+
+        # A collection might have objects
+        graph = SceneGraph(self.scene_graph.scene)
+        for o in self.collection.objects:
+            graph.add_node(o)
+
+        self.children.extend(graph.root.children)
