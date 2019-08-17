@@ -489,18 +489,6 @@ class SceneGraph():
 
         return current_string
 
-    def as_groups(self) -> List[GroupNode]:
-        """Returns a list of nodes, each representing a Blender view layer.
-
-        This method creates a parent 'GroupNode' and assign it children.
-        Aside from the root nodes no other nodes are created, only
-        references to the IR SceneGraph are taken.
-
-        Returns:
-            List[GroupNode] -- A list of GroupNodes
-        """
-        return [GroupNode(self, view_layer) for view_layer in self.scene.view_layers]
-
 
 class MeshNode(Node):
     """A class for meshes that tries to provide its data in a way an
