@@ -60,6 +60,7 @@ class RamsesBlenderExporter():
     def do_passes(self, scene_representation: SceneRepresentation, ramses_scene: RamsesPython.Scene):
         for layer in scene_representation.layers:
             assert isinstance(layer, ViewLayerNode)
+            log.debug(f'Setting up a RenderPass for {layer.name}')
 
             render_pass = ramses_scene.createRenderPass(f'RenderPass for {layer.name}')
 
@@ -90,6 +91,7 @@ class RamsesBlenderExporter():
 
         def do_group(scene_representation, ramses_scene, ramses_pass, current_node):
             assert isinstance(current_node, ViewLayerNode) or isinstance(current_node, LayerCollectionNode)
+            log.debug(f'Setting up a RenderGroup for {current_node.name}')
 
             current_group = ramses_scene.createRenderGroup(f'RenderGroup for {current_node.name}')
             render_order = 0
