@@ -52,7 +52,14 @@ class ExportableScene():
     def is_valid(self):
         """Whether the underlying RAMSES scene is valid."""
         report = self.get_validation_report()
-        return len(report) == 0
+        # TODO: FIXME. A RenderGroup containing only nested RenderGroups triggers a warning.
+        #              This is the default for Blender, however, since the default scene is
+        #              organized as follows: 'Scene collection' -> 'Collection' -> (cube, camera, light).
+        #              Therefore, the topmost RAMSES RenderGroup has a nested RenderGroup and no meshes.
+        #              Maybe this should be reconsidered in RAMSES, as it produces completely
+        #              valid output.
+        empty_render_group = 'WARNING: rendergroup does not contain any meshes'
+        return len(report) == 0 or empty_render_group in report
 
     def set_output_dir(self, output_dir: str):
         """Sets the output directory if this scene is to be saved"""
