@@ -76,6 +76,18 @@ class RamsesBlenderExporter():
                   ramses_scene: RamsesPython.Scene,
                   ramses_pass: RamsesPython.RenderPass):
 
+        def extract_nested_meshes(mesh):
+
+            ret = []
+
+            for child in mesh.children:
+                if isinstance(child, MeshNode):
+                    ret.append(child)
+
+                ret.extend(extract_nested_meshes(child))
+
+            return ret
+
         def do_group(scene_representation, ramses_scene, ramses_pass, current_node):
             assert isinstance(current_node, ViewLayerNode) or isinstance(current_node, LayerCollectionNode)
 
@@ -96,6 +108,18 @@ class RamsesBlenderExporter():
 
                     current_group.addMesh(ramses_mesh, render_order)
                     render_order += 1
+
+                    for nested_mesh in extract_nested_meshes(child):
+                        # Fix for when a mesh has child meshes.
+                        # It would break otherwise.
+                        # Only the topmost mesh would get added to the group,
+                        # any child mesh would be left behind.
+                        translation_result = self.translate(ramses_scene, nested_mesh)
+                        assert translation_result
+
+                        ramses_mesh = RamsesPython.toMesh(ramses_scene.findObjectByName(nested_mesh.name))
+                        current_group.addMesh(ramses_mesh, render_order)
+                        render_order += 1
 
                     empty = False
 

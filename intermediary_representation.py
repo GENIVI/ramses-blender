@@ -820,8 +820,13 @@ class ViewLayerNode(Node):
         assert nodes
 
         for node in nodes:
+            if node == self:
+                continue
+
             if node.blender_object:
                 node.blender_object = node.blender_object.evaluated_get(self.depsgraph)
+
+            node.name += f'[Evaluated for ViewLayer: "{self.name}"]'
             node.update()
 
 
