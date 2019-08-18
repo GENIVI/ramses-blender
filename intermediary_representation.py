@@ -74,6 +74,10 @@ class SceneRepresentation():
     def _doCustomParams(self, custom_params, graph):
         for scene_object_name, params in custom_params.items():
             blender_object = self.scene.objects[scene_object_name]
+
+            if self.evaluate and isinstance(graph, ViewLayerNode):
+                blender_object = blender_object.evaluated_get(graph.depsgraph)
+
             node = graph.find_from_blender_object(blender_object)
 
             if not node:
