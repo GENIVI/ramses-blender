@@ -65,7 +65,11 @@ class RamsesBlenderExporter():
             render_pass = ramses_scene.createRenderPass(f'RenderPass for {layer.name}')
 
             scene_camera_blender_object = scene_representation.camera
-            scene_camera_ir = scene_representation.graph.find_from_blender_object(scene_camera_blender_object)[0]
+
+            if scene_representation.evaluate:
+                scene_camera_blender_object = scene_camera_blender_object.evaluated_get(layer.depsgraph)
+
+            scene_camera_ir = layer.find_from_blender_object(scene_camera_blender_object)[0]
 
             camera = RamsesPython.toCamera(ramses_scene.findObjectByName(scene_camera_ir.name))
             render_pass.setCamera(camera)
@@ -100,10 +104,6 @@ class RamsesBlenderExporter():
             for child in current_node.children:
 
                 if isinstance(child, MeshNode):
-                    # NOTE: I guess evaluating objects might change them, so we should maybe
-                    #       create new objects in RAMSES (i.e. by calling translate())
-                    translation_result = self.translate(ramses_scene, child)
-                    assert translation_result
 
                     ramses_mesh = RamsesPython.toMesh(ramses_scene.findObjectByName(child.name))
                     assert ramses_mesh
@@ -116,8 +116,6 @@ class RamsesBlenderExporter():
                         # It would break otherwise.
                         # Only the topmost mesh would get added to the group,
                         # any child mesh would be left behind.
-                        translation_result = self.translate(ramses_scene, nested_mesh)
-                        assert translation_result
 
                         ramses_mesh = RamsesPython.toMesh(ramses_scene.findObjectByName(nested_mesh.name))
                         current_group.addMesh(ramses_mesh, render_order)
@@ -178,10 +176,15 @@ class RamsesBlenderExporter():
         log.debug(\
             f'Intermediary representation consists of:\n{str(scene_representation.graph)}')
 
-        ramses_root = self._ramses_build_recursively(ramses_scene,
-                                                     ir_root,
-                                                     parent=None,
-                                                     exportable_scene=exportable_scene)
+        ramses_root = ramses_scene.createNode('RAMSES Root')
+
+        for layer in scene_representation.layers:
+            placeholder = ramses_scene.createNode(f'Placeholder node for ViewLayer "{layer.name}"')
+            self._ramses_build_recursively(ramses_scene,
+                                           layer,
+                                           parent=placeholder,
+                                           exportable_scene=exportable_scene)
+            ramses_root.addChild(placeholder)
 
         self.do_passes(scene_representation, ramses_scene)
 
@@ -220,28 +223,39 @@ class RamsesBlenderExporter():
             RamsesPython.Node -- The built node / scene graph
         """
 
-        log.debug((' ' * current_depth * 4) +
-                  f'Recursively building RAMSES nodes for IR node: "{str(ir_node)}", '
-                 +f'RAMSES parent is "{parent.getName() if parent else None}"')
+        skip = isinstance(ir_node, ViewLayerNode) or isinstance(ir_node, LayerCollectionNode)
 
-        translation_result = self.translate(scene, ir_node, exportable_scene=exportable_scene)
-        first_translated_node = translation_result[0]
-        last_translated_node = translation_result[-1]
+        if skip:
+            for child in ir_node.children:
+                self._ramses_build_recursively(scene,
+                                               child,
+                                               exportable_scene,
+                                               parent=parent,
+                                               current_depth=current_depth)
+            return parent
+        else:
+            log.debug((' ' * current_depth * 4) +
+                      f'Recursively building RAMSES nodes for IR node: "{str(ir_node)}", '
+                     +f'RAMSES parent is "{parent.getName() if parent else None}"')
 
-        if ir_node.children:
-            current_depth += 1
+            translation_result = self.translate(scene, ir_node, exportable_scene=exportable_scene)
+            first_translated_node = translation_result[0]
+            last_translated_node = translation_result[-1]
 
-        for child in ir_node.children:
-            self._ramses_build_recursively(scene,
-                                           child,
-                                           exportable_scene,
-                                           parent=last_translated_node,
-                                           current_depth=current_depth)
+            if ir_node.children:
+                current_depth += 1
 
-        if parent:
-            parent.addChild(first_translated_node)
+            for child in ir_node.children:
+                self._ramses_build_recursively(scene,
+                                            child,
+                                            exportable_scene,
+                                            parent=last_translated_node,
+                                            current_depth=current_depth)
 
-        return first_translated_node
+            if parent:
+                parent.addChild(first_translated_node)
+
+            return first_translated_node
 
 
     def translate(self, scene: RamsesPython.Scene, ir_node: Node, exportable_scene: ExportableScene = None) -> RamsesPython.Node:
