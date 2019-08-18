@@ -43,6 +43,8 @@ class SceneRepresentation():
     @property
     def camera(self):
         camera = self.scene.camera
+        if not camera:
+            raise RuntimeError('Please set the scene camera in Blender.')
         return camera
 
     def build_ir(self):
