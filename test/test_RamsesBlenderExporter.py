@@ -27,7 +27,10 @@ class TestRamsesBlenderExporter(ExporterTestBase, unittest.TestCase):
         ExporterTestBase.__init__(self)
 
     def setUp(self):
-        pass
+        bpy.ops.object.add(radius=1.0, type='CAMERA')
+        camera = bpy.data.objects['Camera']
+        for scene in bpy.data.scenes:
+            scene.camera = camera
 
     def tearDown(self):
         pass
