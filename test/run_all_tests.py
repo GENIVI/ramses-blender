@@ -213,6 +213,34 @@ def main():
                 'expected_image': os.path.join(current_path, 'expected_results/export_cube_with_bevel_modifier.png'),
                 'expected_output_files': 5,
             },
+        'export_cube_with_bevel_modifier_not_set_in_GUI' :
+            {
+                'script'        : os.path.join(current_path, 'export_cube_with_bevel_modifier_not_set_in_gui.py'),
+                'test_scene'    : os.path.join(current_path, 'test_scenes/cube_modifier_bevel.blend'),
+                'expected_image': os.path.join(current_path, 'expected_results/export_cube_with_bevel_modifier_not_set_in_GUI.png'),
+                'expected_output_files': 5,
+            },
+        'export_multiple_layers_and_collections_all_enabled' :
+            {
+                'script'        : os.path.join(current_path, 'export_multiple_layers_and_collections_all_enabled.py'),
+                'test_scene'    : os.path.join(current_path, 'test_scenes/layers_all_enabled.blend'),
+                'expected_image': os.path.join(current_path, 'expected_results/export_multiple_layers_and_collections_all_enabled.png'),
+                'expected_output_files': 5,
+            },
+        'export_multiple_layers_and_collections_one_disabled' :
+            {
+                'script'        : os.path.join(current_path, 'export_multiple_layers_and_collections_one_disabled.py'),
+                'test_scene'    : os.path.join(current_path, 'test_scenes/layers_one_disabled.blend'),
+                'expected_image': os.path.join(current_path, 'expected_results/export_multiple_layers_and_collections_one_disabled.png'),
+                'expected_output_files': 5,
+            },
+        'export_multiple_layers_and_collections_all_enabled_one_collection_excluded' :
+            {
+                'script'        : os.path.join(current_path, 'export_multiple_layers_and_collections_all_enabled_one_collection_excluded.py'),
+                'test_scene'    : os.path.join(current_path, 'test_scenes/layers_all_enabled_one_collection_excluded.blend'),
+                'expected_image': os.path.join(current_path, 'expected_results/export_multiple_layers_and_collections_all_enabled_one_collection_excluded.png'),
+                'expected_output_files': 5,
+            },
 
     }
 

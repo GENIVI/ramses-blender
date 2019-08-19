@@ -69,6 +69,7 @@ class RamsesBlenderExporter():
             if scene_representation.evaluate:
                 scene_camera_blender_object = scene_camera_blender_object.evaluated_get(layer.depsgraph)
 
+            assert len(layer.find_from_blender_object(scene_camera_blender_object)) == 1, 'Did you exclude the scene camera from the view layer?'
             scene_camera_ir = layer.find_from_blender_object(scene_camera_blender_object)[0]
 
             camera = RamsesPython.toCamera(ramses_scene.findObjectByName(scene_camera_ir.name))
