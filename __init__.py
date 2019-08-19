@@ -141,6 +141,8 @@ class RamsesExportOperator(bpy.types.Operator):
 
     mesh_list_index: bpy.props.IntProperty(name="index for the MeshUIList", default = 0)
 
+    evaluate: bpy.props.BoolProperty(name='Evaluate modifiers & deformations', default=True)
+
     def glsl_list_init(self):
         # Populate the GLSL UI list as soon as the fileselect window opens
         for _object in bpy.data.objects:
@@ -187,7 +189,7 @@ class RamsesExportOperator(bpy.types.Operator):
             debug_utils.debug_logger_set = True
 
         exporter = RamsesBlenderExporter(bpy.data.scenes)
-        exporter.extract_from_blender_scene(params)
+        exporter.extract_from_blender_scene(params, self.evaluate)
         exporter.build_from_extracted_representations()
 
         for exportable_scene in exporter.get_exportable_scenes():
@@ -219,6 +221,8 @@ class RamsesExportOperator(bpy.types.Operator):
         col = layout.column()
         row = col.row(align=True)
         row.prop(self, 'emit_debug_files')
+        row = col.row(align=True)
+        row.prop(self, 'evaluate')
         row = col.row(align=True)
         row.prop(self, 'platform')
 
