@@ -206,6 +206,13 @@ def main():
                 'expected_image': os.path.join(current_path, 'expected_results/export_translated1X2Y3Z_cube.png'),
                 'expected_output_files': 5,
             },
+        'export_cube_with_bevel_modifier' :
+            {
+                'script'        : os.path.join(current_path, 'export_cube_with_bevel_modifier.py'),
+                'test_scene'    : os.path.join(current_path, 'test_scenes/cube_modifier_bevel.blend'),
+                'expected_image': os.path.join(current_path, 'expected_results/export_cube_with_bevel_modifier.png'),
+                'expected_output_files': 5,
+            },
 
     }
 

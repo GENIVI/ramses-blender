@@ -55,7 +55,8 @@ class ExporterTestBase():
                                        take_screenshot: bool = True,
                                        platform: str = '',
                                        generate_expected_screenshots: bool = False,
-                                       custom_params=None):
+                                       custom_params=None,
+                                       evaluate: bool = False):
 
         # Make configurable, but otherwise get them from CLI
         if not output_dir:
@@ -86,7 +87,7 @@ class ExporterTestBase():
             assert take_screenshot
 
         exporter = RamsesBlenderExporter(bpy.data.scenes)
-        exporter.extract_from_blender_scene(custom_params=custom_params)
+        exporter.extract_from_blender_scene(custom_params=custom_params, evaluate=evaluate)
         exporter.build_from_extracted_representations()
 
         if len(exporter.get_exportable_scenes()) != num_scenes:
