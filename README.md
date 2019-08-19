@@ -7,7 +7,7 @@ RAMSES is a 3D graphics framework concerned with the efficient distribution of g
 
 This exporter makes leveraging Blender - a powerful open source 3D modeller - possible for the creation of content to be used in applications developed with the RAMSES framework.
 
-![Here is how it looks currently](DemoScreenshot.png?raw=true "Here is how it looks like currently")
+![Here is how it looks currently](DemoScreenshot.png?raw=true "Here is how it looks like currently")*Rendering of a car in RAMSES from a third-party Blender model. Model is hosted on [Sketchfab](https://sketchfab.com/3d-models/bmw-x5-4-5c20a2cf4b3f41d1b975ebbf734b613e) and licensed under *CC BY 4.0**
 
 How does it work?
 ====================
