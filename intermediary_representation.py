@@ -61,12 +61,13 @@ class SceneRepresentation():
 
     def do_view_layers(self, evaluate: bool = False):
         for view_layer in self.scene.view_layers:
-           layer_node = ViewLayerNode(self.graph, view_layer)
+            if view_layer.use:
+                layer_node = ViewLayerNode(self.graph, view_layer)
 
-           if evaluate:
-               layer_node.evaluate()
+                if evaluate:
+                    layer_node.evaluate()
 
-           self.layers.append(layer_node)
+                self.layers.append(layer_node)
 
     def teardown(self):
         self.graph.teardown()
